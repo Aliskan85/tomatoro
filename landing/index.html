@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+<link rel="icon" type="image/png" sizes="64x64" href="img/favicon.png">
+<link rel="apple-touch-icon" href="img/favicon.png">
+<title>Томаторо - помощник в фокусировке на работе</title>
+<meta name="description" content="Tomatoro — таймер по методу Помодоро с ИИ-напарником: замечает отвлечения и возвращает к работе.">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config={theme:{extend:{fontFamily:{display:['Unbounded','sans-serif'],body:['Golos Text','system-ui','sans-serif'],mono:['JetBrains Mono','monospace']},colors:{cream:'#FFF9F0',tomato:'#E94F37','tomato-dark':'#C43D2B','tomato-light':'#F9C4B8',leaf:'#4C9F70','leaf-light':'#CDEBD8',basil:'#1E1B18',mustard:'#F5B841',lavender:'#D9D4F1'},boxShadow:{hard:'4px 4px 0px 0px rgba(30,27,24,1)','hard-sm':'3px 3px 0px 0px rgba(30,27,24,1)','hard-lg':'6px 6px 0px 0px rgba(30,27,24,1)','hard-xl':'8px 8px 0px 0px rgba(30,27,24,1)','hard-tomato':'6px 6px 0px 0px rgba(233,79,55,1)','hard-sm-tomato':'4px 4px 0px 0px rgba(233,79,55,1)'}}}}
+</script>
+<style>
+*{-webkit-tap-highlight-color:transparent}
+::selection{background:#E94F37;color:#fff}
+body{font-family:'Golos Text',system-ui,sans-serif}
+h1,h2,h3{font-family:'Unbounded',sans-serif}
+.press{transition:transform .12s,box-shadow .12s}
+.press:hover{transform:translate(2px,2px);box-shadow:none!important}
+.press:active{transform:translate(4px,4px)}
+
+@keyframes float{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-14px) rotate(2deg)}}
+@keyframes floatRev{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-9px) rotate(-2deg)}}
+@keyframes wiggle{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+@keyframes pop{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes leafWave{0%,100%{transform:translateX(-50%) rotate(-5deg)}50%{transform:translateX(-50%) rotate(5deg)}}
+@keyframes blink{0%,90%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+
+.a-float{animation:float 4.5s ease-in-out infinite}
+.a-float-rev{animation:floatRev 5.5s ease-in-out infinite}
+.a-wiggle{animation:wiggle 2.6s ease-in-out infinite}
+.a-breathe{animation:breathe 4s ease-in-out infinite}
+.a-pop{animation:pop .5s cubic-bezier(.34,1.56,.64,1) forwards}
+.a-slide{animation:slideUp .6s cubic-bezier(.22,1,.36,1) forwards}
+.a-marquee{animation:marquee 24s linear infinite}
+
+.reveal{opacity:0;transform:translateY(28px);transition:all .65s cubic-bezier(.22,1,.36,1)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+.sticker::after{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(135deg,rgba(255,255,255,.35) 0%,transparent 50%);pointer-events:none}
+
+/* === TOMATORE CHARACTER (from demo) === */
+.tomatoro{position:relative;display:inline-flex;flex-shrink:0}
+.tomatoro .t-body{background:#E94F37;border:3px solid #1E1B18;border-radius:50%;position:relative;box-shadow:4px 4px 0 #1E1B18;overflow:hidden}
+.tomatoro .t-body::after{content:'';position:absolute;top:15%;left:15%;width:25%;height:35%;background:rgba(255,255,255,.4);border-radius:50%;transform:rotate(-20deg)}
+.tomatoro .t-leaf{background:#4C9F70;border:3px solid #1E1B18;position:absolute;border-radius:0 50% 50% 50%;z-index:2;transform-origin:bottom center;animation:leafWave 4s infinite ease-in-out}
+.tomatoro .t-eye{width:12%;height:12%;background:#1E1B18;border-radius:50%;position:absolute;z-index:3;transition:all .3s ease}
+.tomatoro .t-mouth{position:absolute;z-index:3;border-bottom:3px solid #1E1B18;border-radius:0 0 20px 20px;transition:all .3s ease}
+
+.tomatoro-sm{width:72px;height:84px}
+.tomatoro-sm .t-body{width:72px;height:72px;bottom:0;position:absolute;left:0}
+.tomatoro-sm .t-leaf{width:36px;height:24px;top:0;left:50%;transform:translateX(-50%)}
+.tomatoro-sm .t-eye{top:42%}
+.tomatoro-sm .t-eye.l{left:28%}.tomatoro-sm .t-eye.r{right:28%}
+.tomatoro-sm .t-mouth{bottom:22%;left:50%;transform:translateX(-50%);width:24px;height:8px}
+
+.tomatoro-lg{width:120px;height:140px}
+.tomatoro-lg .t-body{width:120px;height:120px;bottom:0;position:absolute;left:0}
+.tomatoro-lg .t-leaf{width:60px;height:40px;top:0;left:50%;transform:translateX(-50%)}
+.tomatoro-lg .t-eye{top:42%;width:14px;height:14px}
+.tomatoro-lg .t-eye.l{left:30px}.tomatoro-lg .t-eye.r{right:30px}
+.tomatoro-lg .t-mouth{bottom:28%;left:50%;transform:translateX(-50%);width:30px;height:10px}
+
+.tomatoro-cheerful .t-eye{height:6px!important;border-radius:3px!important}
+.tomatoro-cheerful .t-mouth{border-bottom-width:4px;border-radius:0 0 30px 30px}
+
+.tomatoro-blink .t-eye{animation:blink 4s ease-in-out infinite}
+.tomatoro-blink .t-eye.r{animation-delay:.05s}
+
+/* Privacy interactive */
+@keyframes detectPulse{0%,100%{opacity:.3;transform:scale(1)}50%{opacity:1;transform:scale(1.15)}}
+.detect-dot{animation:detectPulse 2s ease-in-out infinite}
+.detect-dot:nth-child(2){animation-delay:.3s}
+.detect-dot:nth-child(3){animation-delay:.6s}
+@keyframes slideRight{0%{transform:translateX(-100%);opacity:0}30%{opacity:1}100%{transform:translateX(200%);opacity:0}}
+.no-shake:hover{animation:shake .4s ease-in-out}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px) rotate(-1deg)}75%{transform:translateX(4px) rotate(1deg)}}
+
+/* Bar chart from demo */
+.bar-chart{display:flex;align-items:flex-end;justify-content:space-between;height:180px;border-bottom:3px solid #1E1B18;border-left:3px solid #1E1B18;padding:0 16px;position:relative;background-image:linear-gradient(to top,transparent 0,transparent 39px,rgba(30,27,24,.12) 40px);background-size:100% 40px}
+.bar-wrap{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;width:10%;height:100%}
+.bar-val{font-size:11px;font-weight:700;margin-bottom:4px;font-family:'Unbounded'}
+.bar{width:80%;max-width:36px;border:2px solid #1E1B18;border-radius:8px 8px 0 0;transition:height .5s ease}
+.bar.leaf{background:#4C9F70}.bar.partial{background:#F5B841}.bar.fail{background:#E94F37}
+.bar-labels{display:flex;justify-content:space-between;padding:6px 16px 0}
+.bar-label{font-size:11px;font-weight:600;opacity:.5;width:10%;text-align:center}
+
+/* Timeline mini from demo */
+.tl-mini{display:flex;align-items:center;gap:3px;padding:8px;background:#FFF9F0;border:2px solid #1E1B18;border-radius:10px;overflow-x:auto}
+.seg-mini{width:28px;height:28px;border-radius:50%;border:2px solid #1E1B18;display:flex;align-items:center;justify-content:center;font-size:12px;background:#FFF9F0;flex-shrink:0}
+.seg-done{background:#4C9F70;color:#fff}
+.seg-brk{background:#F5B841;color:#1E1B18;border-radius:4px;transform:scale(.8)}
+.seg-cur{background:#E94F37;color:#fff;animation:pulse-seg 1.5s infinite}
+.seg-up{background:#FFF9F0;border-style:dashed;opacity:.5}
+.seg-long{width:36px;border-radius:6px}
+.seg-div{width:2px;height:28px;background:#1E1B18;opacity:.2;margin:0 4px;flex-shrink:0}
+.pomo-grp{display:flex;align-items:center;gap:3px;padding:3px;border:2px dashed #F5B841;border-radius:8px;background:rgba(245,184,65,.08);flex-shrink:0}
+@keyframes pulse-seg{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+
+/* Level card from demo */
+.level-bar{height:10px;background:#FFF9F0;border:2px solid #1E1B18;border-radius:6px;overflow:hidden}
+.level-fill{height:100%;background:#F5B841;transition:width .5s ease}
+</style>
+</head>
+
+<body class="bg-cream text-basil overflow-x-hidden">
+
+<!-- NAV -->
+<nav class="sticky top-0 z-50 bg-cream/92 backdrop-blur-md border-b-2 border-basil">
+  <div class="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-2.5 text-basil no-underline">
+      <div class="w-9 h-9 bg-tomato border-2 border-basil rounded-full shadow-hard-sm relative press">
+        <div class="absolute -top-1.5 left-2.5 w-3 h-2.5 bg-leaf border border-basil rounded-t-sm"></div>
+      </div>
+      <span class="font-display font-black text-lg tracking-tight">Tomatoro</span>
+    </a>
+    <div class="hidden md:flex items-center gap-1">
+      <a href="#how" class="px-3.5 py-2 text-sm font-semibold rounded-xl hover:bg-basil hover:text-cream transition-colors">Как работает</a>
+      <a href="#day" class="px-3.5 py-2 text-sm font-semibold rounded-xl hover:bg-basil hover:text-cream transition-colors">Один день</a>
+      <a href="#no-punish" class="px-3.5 py-2 text-sm font-semibold rounded-xl hover:bg-basil hover:text-cream transition-colors">Без наказаний</a>
+      <a href="#tariffs" class="px-3.5 py-2 text-sm font-semibold rounded-xl hover:bg-basil hover:text-cream transition-colors">Тарифы</a>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="mailto:ishmuratov.ma@yandex.ru" class="hidden sm:block text-sm font-semibold text-basil/60 hover:text-basil underline transition-colors">Написать нам</a>
+      <a href="demo.html" class="px-4 py-2 bg-tomato text-white border-2 border-basil rounded-xl font-bold text-sm shadow-hard-sm press">Демо</a>
+      <button id="menuBtn" class="md:hidden w-10 h-10 border-2 border-basil rounded-xl flex items-center justify-center shadow-hard-sm press"><i data-lucide="menu" class="w-5 h-5" id="menuIcon"></i></button>
+    </div>
+  </div>
+  <div id="mobileMenu" class="md:hidden hidden border-t-2 border-basil bg-cream px-5 pb-4">
+    <div class="flex flex-col gap-1 pt-3">
+      <a href="#how" class="mob-link px-4 py-3 text-sm font-semibold rounded-xl hover:bg-basil hover:text-cream transition-colors">Как работает</a>
+      <a href="#day" class="mob-link px-4 py-3 text-sm font-semibold rounded-xl hover:bg-basil hover:text-cream transition-colors">Один день</a>
+      <a href="#no-punish" class="mob-link px-4 py-3 text-sm font-semibold rounded-xl hover:bg-basil hover:text-cream transition-colors">Без наказаний</a>
+      <a href="#tariffs" class="mob-link px-4 py-3 text-sm font-semibold rounded-xl hover:bg-basil hover:text-cream transition-colors">Тарифы</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header id="top" class="relative pt-12 pb-16 md:pt-20 md:pb-24 px-5 overflow-hidden">
+  <!-- Decor: spread evenly across the WHOLE hero area (9-zone grid), semi-transparent, never covering text -->
+  <div class="absolute top-6 left-[12%] w-10 h-10 bg-lavender border-2 border-basil rounded-xl a-float-rev opacity-40 rotate-6 hidden md:block"></div>
+  <div class="absolute top-10 left-[38%] w-7 h-7 bg-leaf-light border-2 border-basil rounded-lg a-wiggle opacity-40 hidden md:block"></div>
+  <div class="absolute top-8 right-[14%] w-9 h-9 bg-tomato-light border-2 border-basil rounded-2xl a-float opacity-40 hidden md:block"></div>
+  <div class="absolute top-24 right-[38%] w-6 h-6 bg-mustard border-2 border-basil rounded-full a-float opacity-40 hidden md:block"></div>
+  <div class="absolute top-[42%] left-[4%] w-12 h-12 bg-tomato-light border-2 border-basil rounded-2xl a-float opacity-45 -rotate-3 hidden md:block"></div>
+  <div class="absolute top-[60%] left-[3%] w-7 h-7 bg-mustard border-2 border-basil rounded-full a-wiggle opacity-40 hidden md:block"></div>
+  <div class="absolute top-[38%] right-[6%] w-11 h-11 bg-mustard border-2 border-basil rounded-full a-wiggle opacity-45 hidden md:block"></div>
+  <div class="absolute top-[52%] right-[4%] w-8 h-8 bg-leaf-light border-2 border-basil rounded-lg a-float-rev opacity-40 hidden md:block"></div>
+  <div class="absolute bottom-10 left-[8%] w-8 h-8 bg-tomato-light border-2 border-basil rounded-full a-float opacity-40 hidden md:block"></div>
+  <div class="absolute bottom-14 left-[22%] w-9 h-9 bg-lavender border-2 border-basil rounded-xl a-wiggle opacity-35 hidden md:block"></div>
+  <div class="absolute bottom-8 right-[10%] w-10 h-10 bg-tomato-light border-2 border-basil rounded-xl a-float opacity-40 hidden md:block"></div>
+  <div class="absolute bottom-20 right-[28%] w-6 h-6 bg-lavender border-2 border-basil rounded-full a-wiggle opacity-40 hidden lg:block"></div>
+
+  <div class="max-w-6xl mx-auto relative z-10">
+    <div class="flex justify-center mb-6 a-pop">
+      <span class="inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-basil rounded-full shadow-hard-sm font-bold text-sm a-wiggle">🍅 Помодоро с ИИ-напарником · работает в браузере</span>
+    </div>
+    <div class="grid md:grid-cols-5 gap-10 md:gap-14 items-center">
+      <div class="md:col-span-3 text-center md:text-left">
+        <h1 class="text-4xl sm:text-5xl md:text-6xl font-black tracking-tighter leading-[1.05] mb-5 a-slide">Таймер, который замечает, что вы<br><span class="inline-block bg-tomato text-white border-2 border-basil rounded-2xl px-3 md:px-5 py-1 shadow-hard-lg -rotate-1">отвлеклись</span></h1>
+        <p class="text-base md:text-lg text-basil/70 max-w-xl mx-auto md:mx-0 mb-7 a-slide" style="animation-delay:120ms;opacity:0">Tomatoro — таймер по методу Помодоро с напарником-помидором. Ушли с рабочей вкладки — он пришлёт уведомление и позовёт обратно. Дома никто не заметит, что вы отвлеклись, — а Томаторо заметит.</p>
+        <div class="flex flex-col sm:flex-row gap-3 justify-center md:justify-start mb-5 a-slide" style="animation-delay:220ms;opacity:0">
+          <a href="demo.html" class="px-7 py-3.5 bg-tomato text-white border-2 border-basil rounded-2xl font-bold text-base shadow-hard-lg press sticker relative inline-flex items-center gap-2.5"><i data-lucide="play" class="w-5 h-5"></i> Смотреть демо</a>
+          <a href="#apply" class="px-7 py-3.5 bg-white border-2 border-basil rounded-2xl font-bold text-base shadow-hard press inline-flex items-center gap-2.5 justify-center"><i data-lucide="mail" class="w-5 h-5"></i> Заявка на тестирование</a>
+        </div>
+        <p class="text-sm text-basil/50 a-slide" style="animation-delay:320ms;opacity:0">Бесплатный тариф — полный таймер Помодоро без ограничений, навсегда. Ничего устанавливать не нужно.</p>
+      </div>
+      <div class="md:col-span-2 flex justify-center a-slide" style="animation-delay:200ms;opacity:0">
+        <div class="bg-white border-2 border-basil rounded-3xl shadow-hard-xl p-6 a-breathe relative sticker max-w-[260px] w-full">
+          <div class="flex justify-center mb-4">
+            <div class="tomatoro tomatoro-lg tomatoro-cheerful tomatoro-blink"><div class="t-body"></div><div class="t-leaf"></div><div class="t-eye l"></div><div class="t-eye r"></div><div class="t-mouth"></div></div>
+          </div>
+          <div class="text-center mb-3">
+            <div class="font-mono text-5xl font-bold tracking-tighter mb-1">25:00</div>
+            <div class="text-sm font-semibold text-basil/40">фокус-сессия</div>
+          </div>
+          <div class="h-3 bg-cream border-2 border-basil rounded-full overflow-hidden mb-3"><div class="h-full bg-tomato rounded-full" style="width:0%"></div></div>
+          <div class="bg-cream border-2 border-basil rounded-xl p-2.5 flex items-center gap-2">
+            <div class="w-4 h-4 border-2 border-basil rounded-md flex items-center justify-center bg-tomato-light flex-shrink-0"><i data-lucide="target" class="w-2.5 h-2.5"></i></div>
+            <span class="text-xs font-semibold truncate">написать три абзаца статьи</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- MARQUEE -->
+<div class="border-y-2 border-basil bg-tomato py-2.5 overflow-hidden">
+  <div class="a-marquee whitespace-nowrap flex items-center gap-8">
+    <span class="text-sm font-black font-display uppercase tracking-widest text-white">25 минут</span><i class="w-2 h-2 bg-basil rounded-full inline-block"></i>
+    <span class="text-sm font-black font-display uppercase tracking-widest text-white">цель сессии</span><i class="w-2 h-2 bg-basil rounded-full inline-block"></i>
+    <span class="text-sm font-black font-display uppercase tracking-widest text-white">Томаторо на посту</span><i class="w-2 h-2 bg-basil rounded-full inline-block"></i>
+    <span class="text-sm font-black font-display uppercase tracking-widest text-white">без камеры</span><i class="w-2 h-2 bg-basil rounded-full inline-block"></i>
+    <span class="text-sm font-black font-display uppercase tracking-widest text-white">без наказаний</span><i class="w-2 h-2 bg-basil rounded-full inline-block"></i>
+    <span class="text-sm font-black font-display uppercase tracking-widest text-white">по-русски</span><i class="w-2 h-2 bg-basil rounded-full inline-block"></i>
+    <span class="text-sm font-black font-display uppercase tracking-widest text-white">метод Помодоро</span><i class="w-2 h-2 bg-basil rounded-full inline-block"></i>
+    <span class="text-sm font-black font-display uppercase tracking-widest text-white">итоги дня</span><i class="w-2 h-2 bg-basil rounded-full inline-block"></i>
+    <span class="text-sm font-black font-display uppercase tracking-widest text-white">25 минут</span><i class="w-2 h-2 bg-basil rounded-full inline-block"></i>
+    <span class="text-sm font-black font-display uppercase tracking-widest text-white">цель сессии</span><i class="w-2 h-2 bg-basil rounded-full inline-block"></i>
+    <span class="text-sm font-black font-display uppercase tracking-widest text-white">Томаторо на посту</span><i class="w-2 h-2 bg-basil rounded-full inline-block"></i>
+    <span class="text-sm font-black font-display uppercase tracking-widest text-white">без камеры</span><i class="w-2 h-2 bg-basil rounded-full inline-block"></i>
+    <span class="text-sm font-black font-display uppercase tracking-widest text-white">без наказаний</span><i class="w-2 h-2 bg-basil rounded-full inline-block"></i>
+    <span class="text-sm font-black font-display uppercase tracking-widest text-white">по-русски</span><i class="w-2 h-2 bg-basil rounded-full inline-block"></i>
+    <span class="text-sm font-black font-display uppercase tracking-widest text-white">метод Помодоро</span><i class="w-2 h-2 bg-basil rounded-full inline-block"></i>
+    <span class="text-sm font-black font-display uppercase tracking-widest text-white">итоги дня</span><i class="w-2 h-2 bg-basil rounded-full inline-block"></i>
+  </div>
+</div>
+
+<!-- ПРОБЛЕМА -->
+<section id="problem" class="py-16 md:py-24 px-5">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-12 reveal">
+      <div class="inline-flex items-center gap-2 px-4 py-2 bg-tomato-light border-2 border-basil rounded-full shadow-hard-sm font-bold text-sm mb-5"><i data-lucide="home" class="w-4 h-4"></i> проблема</div>
+      <h2 class="text-3xl md:text-4xl font-black tracking-tighter">В офисе дисциплинировали коллеги.<br>Дома — никто</h2>
+    </div>
+    <div class="grid md:grid-cols-3 gap-5 mb-8">
+      <div class="reveal bg-white border-2 border-basil rounded-2xl p-6 shadow-hard-lg press sticker relative">
+        <div class="w-12 h-12 bg-tomato-light border-2 border-basil rounded-xl flex items-center justify-center mb-4 text-xl">🏢</div>
+        <h3 class="font-bold text-base mb-2">В офисе было просто</h3>
+        <p class="text-sm text-basil/65 leading-relaxed">Рядом были коллеги: видели, что вы полчаса в YouTube, и косились. Руководитель подходил спросить, как задача. Раздражало — но именно это внешнее внимание и дисциплинировало.</p>
+      </div>
+      <div class="reveal bg-white border-2 border-basil rounded-2xl p-6 shadow-hard-lg press sticker relative" style="transition-delay:100ms">
+        <div class="w-12 h-12 bg-lavender border-2 border-basil rounded-xl flex items-center justify-center mb-4 text-xl">🏠</div>
+        <h3 class="font-bold text-base mb-2">Дома — никто не видит</h3>
+        <p class="text-sm text-basil/65 leading-relaxed">Пошли проверить уведомления «на минуту» — опомнились через три часа. Формально вы «были на работе» с 10 до 19. По факту — 2–3 часа настоящей работы. Остальное съели мессенджеры и видео.</p>
+      </div>
+      <div class="reveal bg-white border-2 border-basil rounded-2xl p-6 shadow-hard-lg press sticker relative" style="transition-delay:200ms">
+        <div class="w-12 h-12 bg-tomato-light border-2 border-basil rounded-xl flex items-center justify-center mb-4 text-xl">⏱️</div>
+        <h3 class="font-bold text-base mb-2">Обычный таймер не помощник</h3>
+        <p class="text-sm text-basil/65 leading-relaxed">Он дотикает до конца, даже если вы уже час как ушли с вкладки, — и решит, что всё прошло отлично. Таймер считает минуты. Он не видит, за ними вы или нет.</p>
+      </div>
+    </div>
+    <div class="reveal bg-basil text-cream rounded-2xl p-7 md:p-9 text-center shadow-hard-tomato">
+      <p class="text-base text-white/70 mb-5">Знакомо? Посмотрите, как Tomatoro это исправляет — демо занимает одну минуту.</p>
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <a href="demo.html" class="px-6 py-3 bg-tomato text-white border-2 border-cream rounded-xl font-bold shadow-hard-sm-tomato press inline-flex items-center gap-2 justify-center"><i data-lucide="play" class="w-4 h-4"></i> Смотреть демо</a>
+        <a href="#apply" class="px-6 py-3 bg-white text-basil border-2 border-cream rounded-xl font-bold shadow-hard-sm press inline-flex items-center gap-2 justify-center"><i data-lucide="mail" class="w-4 h-4"></i> Заявка на тестирование</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- КАК РАБОТАЕТ -->
+<section id="how" class="py-16 md:py-24 px-5 bg-white border-y-2 border-basil">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-12 reveal">
+      <div class="inline-flex items-center gap-2 px-4 py-2 bg-lavender border-2 border-basil rounded-full shadow-hard-sm font-bold text-sm mb-5"><i data-lucide="zap" class="w-4 h-4"></i> как это работает</div>
+      <h2 class="text-3xl md:text-4xl font-black tracking-tighter">Ушли с вкладки — Томаторо<br>сам пришлёт уведомление</h2>
+      <p class="text-base text-basil/60 max-w-xl mx-auto mt-4">Утром пишете, чем займётесь, и выбираете задачу. Запускаете таймер — начинается спринт.</p>
+    </div>
+    <div class="grid md:grid-cols-2 gap-8 items-start">
+      <div class="reveal">
+        <p class="text-base text-basil/75 mb-5">Вы ушли с рабочей вкладки — расширение браузера это замечает. Через 4 минуты Томаторо присылает всплывающее уведомление:</p>
+        <!-- Push mockup from demo style -->
+        <div class="bg-white border-2 border-basil rounded-2xl shadow-hard-lg p-5 mb-5 a-pop sticker relative">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="tomatoro tomatoro-sm tomatoro-cheerful"><div class="t-body"></div><div class="t-leaf"></div><div class="t-eye l"></div><div class="t-eye r"></div><div class="t-mouth"></div></div>
+            <div><span class="font-display font-bold text-sm text-tomato-dark tracking-wide">TOMATORO</span><span class="text-xs text-basil/40 ml-2">уведомление</span></div>
+          </div>
+          <p class="text-sm leading-relaxed">«Пропал на 4 минуты. Задача ждёт: <b>„Надо написать три абзаца статьи"</b>. Продолжаем?»</p>
+        </div>
+        <p class="text-sm text-basil/50 leading-relaxed">Возвращаться, чтобы получить оклик, не нужно — уведомление приходит само. Расширение не видит, куда вы ушли: YouTube или банковское приложение — для Томаторо это просто «отсутствовал 6 минут».</p>
+      </div>
+      <div class="reveal grid grid-cols-2 gap-4" style="transition-delay:100ms">
+        <div class="bg-white border-2 border-basil rounded-2xl p-4 shadow-hard press text-center">
+          <div class="text-3xl mb-2">🙂</div>
+          <div class="font-bold text-sm mb-1">Бодрый</div>
+          <div class="font-mono text-xs text-basil/45">первые минуты</div>
+          <div class="mt-3 bg-leaf-light border-2 border-basil rounded-lg p-2 text-xs font-semibold text-basil/70">«Ты в деле, продолжай!»</div>
+        </div>
+        <div class="bg-white border-2 border-basil rounded-2xl p-4 shadow-hard press text-center">
+          <div class="text-3xl mb-2">😟</div>
+          <div class="font-bold text-sm mb-1">Встревоженный</div>
+          <div class="font-mono text-xs text-basil/45">через 4 минуты</div>
+          <div class="mt-3 bg-mustard/30 border-2 border-basil rounded-lg p-2 text-xs font-semibold text-basil/70">«Пропал… задача ждёт»</div>
+        </div>
+        <div class="bg-white border-2 border-basil rounded-2xl p-4 shadow-hard press text-center">
+          <div class="text-3xl mb-2">😢</div>
+          <div class="font-bold text-sm mb-1">Грустный</div>
+          <div class="font-mono text-xs text-basil/45">через 8 минут</div>
+          <div class="mt-3 bg-tomato-light/50 border-2 border-basil rounded-lg p-2 text-xs font-semibold text-basil/70">«Меня одного оставили…»</div>
+        </div>
+        <div class="bg-white border-2 border-basil rounded-2xl p-4 shadow-hard press text-center">
+          <div class="text-3xl mb-2">😤</div>
+          <div class="font-bold text-sm mb-1">Обиженный, но тёплый</div>
+          <div class="font-mono text-xs text-basil/45">через 12 минут</div>
+          <div class="mt-3 bg-lavender/60 border-2 border-basil rounded-lg p-2 text-xs font-semibold text-basil/70">«Я всё ещё здесь, если что»</div>
+        </div>
+      </div>
+    </div>
+    <p class="reveal text-center text-sm text-basil/50 mt-8 max-w-lg mx-auto">Не среагировали — Томаторо не бросит. Тон меняется по нарастающей. Ругаться он не умеет и наказывать не станет.</p>
+  </div>
+</section>
+
+<!-- ОДИН ДЕНЬ -->
+<section id="day" class="py-16 md:py-24 px-5">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-12 reveal">
+      <div class="inline-flex items-center gap-2 px-4 py-2 bg-mustard/30 border-2 border-basil rounded-full shadow-hard-sm font-bold text-sm mb-5"><i data-lucide="sun" class="w-4 h-4"></i> один день с Tomatoro</div>
+      <h2 class="text-3xl md:text-4xl font-black tracking-tighter">Утром — план. Днём — отрезками.<br>Вечером — честные итоги</h2>
+    </div>
+    <div class="grid md:grid-cols-3 gap-5 mb-8">
+      <div class="reveal bg-white border-2 border-basil rounded-2xl p-6 shadow-hard-lg press sticker relative">
+        <div class="text-3xl mb-3">🌅</div>
+        <h3 class="font-bold text-lg mb-2">Утро</h3>
+        <p class="text-sm text-basil/65 leading-relaxed">Открываете кабинет — Томаторо спрашивает, что в фокусе сегодня. Выбираете 2–4 задачи, и день перестаёт быть «разберусь по ходу».</p>
+        <div class="mt-4 space-y-2">
+          <div class="flex items-center gap-2 bg-cream border-2 border-basil rounded-lg px-3 py-2">
+            <div class="w-4 h-4 border-2 border-basil rounded-md bg-tomato flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-2.5 h-2.5 text-white"></i></div>
+            <span class="text-xs font-semibold line-through text-basil/40">написать введение</span>
+          </div>
+          <div class="flex items-center gap-2 bg-cream border-2 border-basil rounded-lg px-3 py-2">
+            <div class="w-4 h-4 border-2 border-basil rounded-md flex-shrink-0"></div>
+            <span class="text-xs font-semibold">сверстать блок отзывов</span>
+          </div>
+        </div>
+      </div>
+      <div class="reveal bg-white border-2 border-basil rounded-2xl p-6 shadow-hard-lg press sticker relative" style="transition-delay:100ms">
+        <div class="text-3xl mb-3">☀️</div>
+        <h3 class="font-bold text-lg mb-2">День</h3>
+        <p class="text-sm text-basil/65 leading-relaxed mb-3">Рабочее время собирается из помодоро. Кликнули по делу — оно стало целью спринта.</p>
+        <!-- Timeline from demo -->
+        <div class="tl-mini no-scrollbar">
+          <div class="pomo-grp">
+            <div class="seg-mini seg-done">🍅</div>
+            <div class="seg-mini seg-brk">☕</div>
+            <div class="seg-mini seg-done">🍅</div>
+            <div class="seg-mini seg-brk">☕</div>
+            <div class="seg-mini seg-cur">🍅</div>
+            <div class="seg-mini seg-long seg-brk">🛋</div>
+          </div>
+          <div class="seg-div"></div>
+          <div class="pomo-grp">
+            <div class="seg-mini seg-up">🍅</div>
+            <div class="seg-mini seg-up" style="border-radius:4px;transform:scale(.8)">☕</div>
+            <div class="seg-mini seg-up">🍅</div>
+          </div>
+        </div>
+      </div>
+      <div class="reveal bg-white border-2 border-basil rounded-2xl p-6 shadow-hard-lg press sticker relative" style="transition-delay:200ms">
+        <div class="text-3xl mb-3">🌙</div>
+        <h3 class="font-bold text-lg mb-2">Вечер</h3>
+        <p class="text-sm text-basil/65 leading-relaxed">Итоги дня: план против факта, сколько спринтов прошли успешно, где увязли. Невыполненное переносится на завтра одной кнопкой.</p>
+        <div class="mt-4 grid grid-cols-2 gap-2">
+          <div class="bg-leaf-light border-2 border-basil rounded-lg p-2 text-center"><div class="text-lg font-black">6</div><div class="text-[10px] font-semibold text-basil/50">спринтов</div></div>
+          <div class="bg-mustard/30 border-2 border-basil rounded-lg p-2 text-center"><div class="text-lg font-black">2.5ч</div><div class="text-[10px] font-semibold text-basil/50">фокуса</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="reveal bg-basil text-cream rounded-2xl p-7 md:p-9 text-center shadow-hard-tomato">
+      <p class="text-base text-white/70 mb-5">Хотите такой день? Оставьте заявку — пришлём доступ, как только наберём следующую группу.</p>
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <a href="#apply" class="px-6 py-3 bg-tomato text-white border-2 border-cream rounded-xl font-bold shadow-hard-sm-tomato press inline-flex items-center gap-2 justify-center"><i data-lucide="mail" class="w-4 h-4"></i> Заявка на тестирование</a>
+        <a href="demo.html" class="px-6 py-3 bg-white text-basil border-2 border-cream rounded-xl font-bold shadow-hard-sm press inline-flex items-center gap-2 justify-center"><i data-lucide="play" class="w-4 h-4"></i> Смотреть демо</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- МЕТОД -->
+<section id="method" class="py-16 md:py-24 px-5 bg-white border-y-2 border-basil">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-12 reveal">
+      <div class="inline-flex items-center gap-2 px-4 py-2 bg-mustard/30 border-2 border-basil rounded-full shadow-hard-sm font-bold text-sm mb-5"><i data-lucide="book-open" class="w-4 h-4"></i> метод</div>
+      <h2 class="text-3xl md:text-4xl font-black tracking-tighter">Что такое метод Помодоро —<br>и почему он работает</h2>
+    </div>
+    <div class="space-y-4 mb-8 reveal">
+      <div class="flex gap-4 items-start"><div class="w-10 h-10 bg-tomato text-white border-2 border-basil rounded-xl flex items-center justify-center font-display font-black text-base shadow-hard-sm flex-shrink-0">1</div><p class="text-sm leading-relaxed pt-1.5"><b>Выбираете одну задачу.</b> Не «поработать над проектом», а конкретный шаг: «написать введение на две страницы».</p></div>
+      <div class="flex gap-4 items-start"><div class="w-10 h-10 bg-tomato text-white border-2 border-basil rounded-xl flex items-center justify-center font-display font-black text-base shadow-hard-sm flex-shrink-0">2</div><p class="text-sm leading-relaxed pt-1.5"><b>Ставите таймер на 25 минут</b> и работаете только над ней.</p></div>
+      <div class="flex gap-4 items-start"><div class="w-10 h-10 bg-tomato text-white border-2 border-basil rounded-xl flex items-center justify-center font-display font-black text-base shadow-hard-sm flex-shrink-0">3</div><p class="text-sm leading-relaxed pt-1.5"><b>Перерыв 5 минут</b> — встать, налить воды, но не открывать соцсети.</p></div>
+      <div class="flex gap-4 items-start"><div class="w-10 h-10 bg-tomato text-white border-2 border-basil rounded-xl flex items-center justify-center font-display font-black text-base shadow-hard-sm flex-shrink-0">4</div><p class="text-sm leading-relaxed pt-1.5"><b>После четырёх отрезков — длинный перерыв</b>, 15–30 минут.</p></div>
+    </div>
+    <div class="reveal flex items-center justify-center gap-2 flex-wrap mb-8">
+      <span class="px-4 py-2.5 bg-tomato text-white border-2 border-basil rounded-xl font-bold text-sm shadow-hard-sm">25 мин работа</span>
+      <span class="font-display font-black text-lg">→</span>
+      <span class="px-4 py-2.5 bg-leaf-light border-2 border-basil rounded-xl font-bold text-sm shadow-hard-sm">5 мин перерыв</span>
+      <span class="font-display font-black text-lg">→</span>
+      <span class="px-4 py-2.5 bg-white border-2 border-basil rounded-xl font-bold text-sm shadow-hard-sm">× 4</span>
+      <span class="font-display font-black text-lg">→</span>
+      <span class="px-4 py-2.5 bg-lavender border-2 border-basil rounded-xl font-bold text-sm shadow-hard-sm">15–30 мин отдых</span>
+    </div>
+    <p class="reveal text-center text-sm text-basil/60 max-w-xl mx-auto mb-6">Метод придумал Франческо Чирилло в конце 1980-х. 25 минут кажутся посильными — а «целый день работы» нет. Короткие перерывы не дают устать. А счёт отрезков показывает, сколько времени задачи съедают на самом деле.</p>
+    <div class="reveal bg-leaf-light border-2 border-basil rounded-2xl p-6 shadow-hard-lg max-w-xl mx-auto">
+      <p class="text-sm leading-relaxed"><b>У метода одно слабое место:</b> все его правила держатся на вашей дисциплине. Но метод нужен именно тогда, когда её не хватает. <b>Tomatoro закрывает это место:</b> таймер тикает, а рядом есть тот, кто заметит, если вы ушли.</p>
+    </div>
+  </div>
+</section>
+
+<!-- БЕЗ НАКАЗАНИЙ -->
+<section id="no-punish" class="py-16 md:py-24 px-5">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-12 reveal">
+      <div class="inline-flex items-center gap-2 px-4 py-2 bg-tomato-light border-2 border-basil rounded-full shadow-hard-sm font-bold text-sm mb-5"><i data-lucide="heart" class="w-4 h-4"></i> без наказаний</div>
+      <h2 class="text-3xl md:text-4xl font-black tracking-tighter">Сорвали отрезок?<br>Здесь за это не наказывают</h2>
+    </div>
+
+    <div class="grid sm:grid-cols-2 gap-5 mb-10">
+      <!-- Card 1: sad emoji in proper container -->
+      <div class="reveal bg-white border-2 border-basil rounded-2xl p-6 shadow-hard-lg press sticker relative">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 bg-tomato-light border-2 border-basil rounded-xl flex items-center justify-center flex-shrink-0">
+            <span class="text-lg leading-none block">😟</span>
+          </div>
+          <h3 class="font-bold text-base">Напарник не злится — он грустит</h3>
+        </div>
+        <p class="text-sm text-basil/65 leading-relaxed">Тон реплик прописан в настройках ИИ: бодрый → грустный → обиженный, но тёплый. Агрессии нет никогда.</p>
+      </div>
+
+      <div class="reveal bg-white border-2 border-basil rounded-2xl p-6 shadow-hard-lg press sticker relative" style="transition-delay:100ms">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 bg-leaf-light border-2 border-basil rounded-xl flex items-center justify-center flex-shrink-0">
+            <i data-lucide="check" class="w-5 h-5 text-leaf"></i>
+          </div>
+          <h3 class="font-bold text-base">Срыв не обнуляет день</h3>
+        </div>
+        <p class="text-sm text-basil/65 leading-relaxed">Спринт, в котором вы отвлекались, но вернулись и доделали, всё равно приносит очки — просто меньше, чем идеальный.</p>
+      </div>
+
+      <!-- Card 3: MUSTARD TIMER — on the correct card -->
+      <div class="reveal bg-white border-2 border-basil rounded-2xl p-6 shadow-hard-lg press sticker relative" style="transition-delay:150ms">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 bg-mustard border-2 border-basil rounded-xl flex items-center justify-center flex-shrink-0">
+            <i data-lucide="timer" class="w-5 h-5" style="color:#C43D2B"></i>
+          </div>
+          <h3 class="font-bold text-base">Таймер становится горчичным, а не красным</h3>
+        </div>
+        <p class="text-sm text-basil/65 leading-relaxed">Красный в интерфейсе — только для системных ошибок. Ваш срыв — не ошибка системы.</p>
+      </div>
+
+      <div class="reveal bg-white border-2 border-basil rounded-2xl p-6 shadow-hard-lg press sticker relative" style="transition-delay:200ms">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 bg-lavender border-2 border-basil rounded-xl flex items-center justify-center flex-shrink-0">
+            <i data-lucide="settings" class="w-5 h-5"></i>
+          </div>
+          <h3 class="font-bold text-base">Строгость настраиваете вы</h3>
+        </div>
+        <p class="text-sm text-basil/65 leading-relaxed">Длина отрезков, паузы, «честный перерыв» вместо спринта. Выбор всегда за вами.</p>
+      </div>
+    </div>
+
+    <!-- Analytics chart: jagged focus line + dashed trend -->
+    <div class="reveal bg-white border-2 border-basil rounded-2xl shadow-hard-xl overflow-hidden max-w-2xl mx-auto">
+      <div class="px-6 pt-5 pb-3">
+        <h3 class="font-bold text-base">Динамика фокуса и индекс продуктивности</h3>
+        <p class="text-xs text-basil/50 mt-1">Время фокуса колеблется (зубчатая линия), но общий тренд (штриховая линия) растёт</p>
+      </div>
+      <div class="px-5 pb-5">
+        <svg viewBox="0 0 620 220" class="w-full" style="overflow:visible">
+          <line x1="50" y1="20" x2="600" y2="20" stroke="#1E1B18" stroke-opacity="0.07" stroke-width="1"/>
+          <line x1="50" y1="65" x2="600" y2="65" stroke="#1E1B18" stroke-opacity="0.07" stroke-width="1"/>
+          <line x1="50" y1="110" x2="600" y2="110" stroke="#1E1B18" stroke-opacity="0.07" stroke-width="1"/>
+          <line x1="50" y1="155" x2="600" y2="155" stroke="#1E1B18" stroke-opacity="0.07" stroke-width="1"/>
+          <line x1="50" y1="180" x2="600" y2="180" stroke="#1E1B18" stroke-width="2"/>
+          <line x1="50" y1="20" x2="50" y2="180" stroke="#1E1B18" stroke-width="2"/>
+          <text x="42" y="24" text-anchor="end" font-size="10" fill="#1E1B18" fill-opacity="0.4" font-family="JetBrains Mono,monospace">4ч</text>
+          <text x="42" y="69" text-anchor="end" font-size="10" fill="#1E1B18" fill-opacity="0.4" font-family="JetBrains Mono,monospace">3ч</text>
+          <text x="42" y="114" text-anchor="end" font-size="10" fill="#1E1B18" fill-opacity="0.4" font-family="JetBrains Mono,monospace">2ч</text>
+          <text x="42" y="159" text-anchor="end" font-size="10" fill="#1E1B18" fill-opacity="0.4" font-family="JetBrains Mono,monospace">1ч</text>
+          <text x="95" y="198" text-anchor="middle" font-size="10" fill="#1E1B18" fill-opacity="0.45" font-family="JetBrains Mono,monospace">Пн</text>
+          <text x="155" y="198" text-anchor="middle" font-size="10" fill="#1E1B18" fill-opacity="0.45" font-family="JetBrains Mono,monospace">Вт</text>
+          <text x="215" y="198" text-anchor="middle" font-size="10" fill="#1E1B18" fill-opacity="0.45" font-family="JetBrains Mono,monospace">Ср</text>
+          <text x="275" y="198" text-anchor="middle" font-size="10" fill="#1E1B18" fill-opacity="0.45" font-family="JetBrains Mono,monospace">Чт</text>
+          <text x="335" y="198" text-anchor="middle" font-size="10" fill="#1E1B18" fill-opacity="0.45" font-family="JetBrains Mono,monospace">Пт</text>
+          <text x="395" y="198" text-anchor="middle" font-size="10" fill="#1E1B18" fill-opacity="0.45" font-family="JetBrains Mono,monospace">Сб</text>
+          <text x="455" y="198" text-anchor="middle" font-size="10" fill="#1E1B18" fill-opacity="0.45" font-family="JetBrains Mono,monospace">Пн</text>
+          <text x="515" y="198" text-anchor="middle" font-size="10" fill="#1E1B18" fill-opacity="0.45" font-family="JetBrains Mono,monospace">Вт</text>
+          <text x="575" y="198" text-anchor="middle" font-size="10" fill="#1E1B18" fill-opacity="0.45" font-family="JetBrains Mono,monospace">Ср</text>
+          <polyline points="95,125 155,85 215,135 275,70 335,100 395,55 455,80 515,42 575,35" fill="none" stroke="#E94F37" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle cx="95" cy="125" r="4" fill="#E94F37" stroke="#FFF9F0" stroke-width="2"/>
+          <circle cx="155" cy="85" r="4" fill="#E94F37" stroke="#FFF9F0" stroke-width="2"/>
+          <circle cx="215" cy="135" r="4" fill="#E94F37" stroke="#FFF9F0" stroke-width="2"/>
+          <circle cx="275" cy="70" r="4" fill="#E94F37" stroke="#FFF9F0" stroke-width="2"/>
+          <circle cx="335" cy="100" r="4" fill="#E94F37" stroke="#FFF9F0" stroke-width="2"/>
+          <circle cx="395" cy="55" r="4" fill="#E94F37" stroke="#FFF9F0" stroke-width="2"/>
+          <circle cx="455" cy="80" r="4" fill="#E94F37" stroke="#FFF9F0" stroke-width="2"/>
+          <circle cx="515" cy="42" r="4" fill="#E94F37" stroke="#FFF9F0" stroke-width="2"/>
+          <circle cx="575" cy="35" r="4" fill="#E94F37" stroke="#FFF9F0" stroke-width="2"/>
+          <line x1="95" y1="120" x2="575" y2="38" stroke="#1E1B18" stroke-width="2" stroke-dasharray="8 5" stroke-linecap="round"/>
+          <line x1="200" y1="212" x2="220" y2="212" stroke="#E94F37" stroke-width="2.5" stroke-linecap="round"/>
+          <text x="225" y="216" font-size="10" fill="#1E1B18" fill-opacity="0.6" font-family="Golos Text,sans-serif" font-weight="600">факт</text>
+          <line x1="270" y1="212" x2="290" y2="212" stroke="#1E1B18" stroke-width="2" stroke-dasharray="6 4" stroke-linecap="round"/>
+          <text x="295" y="216" font-size="10" fill="#1E1B18" fill-opacity="0.6" font-family="Golos Text,sans-serif" font-weight="600">тренд</text>
+        </svg>
+      </div>
+    </div>
+      <!-- Trend annotation -->
+      <div class="bg-leaf-light/50 border-t-2 border-basil px-6 py-3 flex items-center justify-center gap-2">
+        <i data-lucide="trending-up" class="w-4 h-4 text-leaf"></i>
+        <span class="text-xs font-bold">Тренд растёт — вы прогрессируете, даже если были провалы</span>
+      </div>
+    </div>
+
+    <div class="reveal bg-basil text-cream rounded-2xl p-7 md:p-9 text-center shadow-hard-tomato mt-8">
+      <p class="text-base text-white/70 mb-5">Посмотрите, как выглядит прогресс без чувства вины — или сразу попросите доступ.</p>
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <a href="demo.html" class="px-6 py-3 bg-tomato text-white border-2 border-cream rounded-xl font-bold shadow-hard-sm-tomato press inline-flex items-center gap-2 justify-center"><i data-lucide="play" class="w-4 h-4"></i> Смотреть демо</a>
+        <a href="#apply" class="px-6 py-3 bg-white text-basil border-2 border-cream rounded-xl font-bold shadow-hard-sm press inline-flex items-center gap-2 justify-center"><i data-lucide="mail" class="w-4 h-4"></i> Заявка на тестирование</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MARQUEE 2 -->
+<div class="border-y-2 border-basil bg-tomato py-2.5 overflow-hidden">
+  <div class="a-marquee whitespace-nowrap flex items-center gap-8" style="animation-direction:reverse">
+    <span class="text-sm font-black font-display uppercase tracking-widest text-white">без камеры</span><i class="w-2 h-2 bg-basil rounded-full inline-block"></i>
+    <span class="text-sm font-black font-display uppercase tracking-widest text-white">без наказаний</span><i class="w-2 h-2 bg-basil rounded-full inline-block"></i>
+    <span class="text-sm font-black font-display uppercase tracking-widest text-white">геймификация</span><i class="w-2 h-2 bg-basil rounded-full inline-block"></i>
+    <span class="text-sm font-black font-display uppercase tracking-widest text-white">помидорки</span><i class="w-2 h-2 bg-basil rounded-full inline-block"></i>
+    <span class="text-sm font-black font-display uppercase tracking-widest text-white">стрик</span><i class="w-2 h-2 bg-basil rounded-full inline-block"></i>
+    <span class="text-sm font-black font-display uppercase tracking-widest text-white">итоги дня</span><i class="w-2 h-2 bg-basil rounded-full inline-block"></i>
+    <span class="text-sm font-black font-display uppercase tracking-widest text-white">без камеры</span><i class="w-2 h-2 bg-basil rounded-full inline-block"></i>
+    <span class="text-sm font-black font-display uppercase tracking-widest text-white">без наказаний</span><i class="w-2 h-2 bg-basil rounded-full inline-block"></i>
+    <span class="text-sm font-black font-display uppercase tracking-widest text-white">геймификация</span><i class="w-2 h-2 bg-basil rounded-full inline-block"></i>
+    <span class="text-sm font-black font-display uppercase tracking-widest text-white">помидорки</span><i class="w-2 h-2 bg-basil rounded-full inline-block"></i>
+    <span class="text-sm font-black font-display uppercase tracking-widest text-white">стрик</span><i class="w-2 h-2 bg-basil rounded-full inline-block"></i>
+    <span class="text-sm font-black font-display uppercase tracking-widest text-white">итоги дня</span><i class="w-2 h-2 bg-basil rounded-full inline-block"></i>
+  </div>
+</div>
+
+<!-- ГЕЙМИФИКАЦИЯ -->
+<section id="game" class="py-16 md:py-24 px-5">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-12 reveal">
+      <div class="inline-flex items-center gap-2 px-4 py-2 bg-lavender border-2 border-basil rounded-full shadow-hard-sm font-bold text-sm mb-5"><i data-lucide="trophy" class="w-4 h-4"></i> геймификация</div>
+      <h2 class="text-3xl md:text-4xl font-black tracking-tighter">Фокус, который окупает подписку</h2>
+      <p class="text-base text-basil/60 max-w-md mx-auto mt-3">Две внутренние валюты — и обе заработанные, а не купленные</p>
+    </div>
+    <div class="grid md:grid-cols-2 gap-5 mb-5">
+      <div class="reveal bg-white border-2 border-basil rounded-2xl p-6 shadow-hard-lg press sticker relative">
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-tomato-light border-2 border-basil rounded-full font-bold text-xs mb-4">🍅 Помидорки</div>
+        <p class="text-sm text-basil/70 leading-relaxed">Внутренняя валюта сервиса. Зарабатываются за день без единого срыва или покупаются за очки фокуса. Помидорками можно оплачивать платный тариф — вплоть до ста процентов.</p>
+      </div>
+      <div class="reveal bg-white border-2 border-basil rounded-2xl p-6 shadow-hard-lg press sticker relative" style="transition-delay:100ms">
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-mustard/40 border-2 border-basil rounded-full font-bold text-xs mb-4">⚡ Очки фокуса</div>
+        <p class="text-sm text-basil/70 leading-relaxed">Капают за каждый успешный спринт. Тратятся на рост уровня, на то, чтобы «подбодрить» расстроившегося Томаторо, и на покупку Помидорок.</p>
+      </div>
+    </div>
+
+    <!-- Level card FROM DEMO -->
+    <div class="reveal bg-cream border-3 border-basil rounded-2xl p-5 shadow-hard-lg max-w-md mx-auto mb-5" style="border-width:3px">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-bold text-basil/50">Ваш уровень:</span>
+        <span class="px-2.5 py-1 bg-mustard border-2 border-basil rounded-md text-xs font-bold shadow-hard-sm">Уровень 3</span>
+      </div>
+      <div class="flex items-center gap-2 mb-1">
+        <span class="text-xl">🍅</span>
+        <span class="font-display font-bold text-lg">Бычье сердце</span>
+      </div>
+      <div class="text-xs text-basil/50 mb-2">Следующий: Оранжевый король</div>
+      <div class="level-bar"><div class="level-fill" style="width:75%"></div></div>
+      <div class="flex items-center justify-between mt-2 text-xs font-semibold">
+        <span>Бонус: 3x</span>
+        <div class="flex items-center gap-1.5"><span>⚡</span><span>4 500 очков фокуса</span></div>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-5 mb-8">
+      <div class="reveal bg-white border-2 border-basil rounded-2xl p-5 shadow-hard press" style="transition-delay:150ms">
+        <div class="flex items-center gap-2 mb-2"><span class="text-xl">🏆</span><h3 class="font-bold text-base">Уровни</h3></div>
+        <p class="text-sm text-basil/60 leading-relaxed">Каждый уровень даёт бонус к начислению очков. А если пропускать дни — уровень сползает вниз. Потерять его действительно можно.</p>
+      </div>
+      <div class="reveal bg-white border-2 border-basil rounded-2xl p-5 shadow-hard press" style="transition-delay:200ms">
+        <div class="flex items-center gap-2 mb-2"><span class="text-xl">🔥</span><h3 class="font-bold text-base">Стрик</h3></div>
+        <p class="text-sm text-basil/60 leading-relaxed">Дни фокуса подряд. Разорвать жалко, продолжить приятно.</p>
+      </div>
+    </div>
+    <p class="reveal text-center font-display font-bold text-lg md:text-xl">Плотно работаете — платите за сервис своим фокусом, а не деньгами</p>
+  </div>
+</section>
+
+<!-- ТАРИФЫ -->
+<section id="tariffs" class="py-16 md:py-24 px-5 bg-white border-y-2 border-basil">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-12 reveal">
+      <div class="inline-flex items-center gap-2 px-4 py-2 bg-leaf-light border-2 border-basil rounded-full shadow-hard-sm font-bold text-sm mb-5"><i data-lucide="tag" class="w-4 h-4"></i> тарифы</div>
+      <h2 class="text-3xl md:text-4xl font-black tracking-tighter">Таймер бесплатен навсегда.<br>Платите — только за напарника</h2>
+    </div>
+    <div class="grid md:grid-cols-2 gap-6 mb-6">
+      <div class="reveal bg-cream border-2 border-basil rounded-2xl p-7 shadow-hard-lg press flex flex-col">
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-leaf-light border-2 border-basil rounded-full font-bold text-xs mb-4 self-start">🆓 Базовый</div>
+        <div class="mb-4"><span class="font-display font-black text-4xl text-leaf">0 ₽</span><span class="text-sm text-basil/50 font-semibold ml-1">навсегда</span></div>
+        <p class="text-sm text-basil/65 leading-relaxed flex-1">Полный метод Помодоро: таймер с настраиваемой длиной отрезков, задачи дня, напоминание при отвлечении, статистика. Без ограничений по времени и числу сессий. Это не пробная версия — она не закончится через две недели.</p>
+        <a href="#apply" class="mt-6 w-full py-3 bg-white border-2 border-basil rounded-xl font-bold text-center shadow-hard-sm press block">Начать</a>
+      </div>
+      <div class="reveal bg-mustard border-2 border-basil rounded-2xl p-7 shadow-hard-xl press flex flex-col relative sticker md:-mt-3 md:mb-[-12px]" style="transition-delay:100ms">
+        <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-basil text-mustard text-xs font-bold uppercase tracking-wider px-4 py-1.5 rounded-full border-2 border-basil z-10">⭐ ИИ-напарник</div>
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-white border-2 border-basil rounded-full font-bold text-xs mb-4 self-start mt-2">🍅 Стандартный</div>
+        <div class="mb-4"><span class="font-display font-black text-4xl">300 ₽</span><span class="text-sm text-basil/60 font-semibold ml-1">в месяц</span></div>
+        <ul class="space-y-2.5 text-sm flex-1">
+          <li class="flex gap-2.5 items-start"><i data-lucide="check" class="w-4 h-4 flex-shrink-0 mt-0.5"></i><span>Всё из тарифа Базовый</span></li>
+          <li class="flex gap-2.5 items-start"><i data-lucide="check" class="w-4 h-4 flex-shrink-0 mt-0.5"></i><span>Обратится голосом и мягко вернёт к задаче</span></li>
+          <li class="flex gap-2.5 items-start"><i data-lucide="check" class="w-4 h-4 flex-shrink-0 mt-0.5"></i><span>Будет переживать и менять интонацию, если затягиваешь перерыв</span></li>
+          <li class="flex gap-2.5 items-start"><i data-lucide="check" class="w-4 h-4 flex-shrink-0 mt-0.5"></i><span>Запомнит, в какие часы чаще отвлекаешься, и подстроит советы</span></li>
+          <li class="flex gap-2.5 items-start"><i data-lucide="check" class="w-4 h-4 flex-shrink-0 mt-0.5"></i><span>Пришлёт системное уведомление, даже если свернул браузер</span></li>
+          <li class="flex gap-2.5 items-start"><i data-lucide="check" class="w-4 h-4 flex-shrink-0 mt-0.5"></i><span>Поможет составить план на утро и подведёт итоги вечером</span></li>
+          <li class="flex gap-2.5 items-start"><i data-lucide="check" class="w-4 h-4 flex-shrink-0 mt-0.5"></i><span>Геймификация: сорта помидоров, стрики и награды</span></li>
+        </ul>
+        <a href="#apply" class="mt-5 w-full py-3 bg-basil text-mustard border-2 border-basil rounded-xl font-bold text-center shadow-[4px_4px_0px_0px_rgba(245,184,65,1)] press block">Выбрать стандартный</a>
+      </div>
+    </div>
+    <p class="reveal text-center text-sm text-basil/50 mb-8">Оплата — рублями или заработанными Помидорками. Активные пользователи могут выходить на бесплатную подписку своим фокусом.</p>
+    <div class="reveal bg-basil text-cream rounded-2xl p-7 md:p-9 text-center shadow-hard-tomato">
+      <p class="text-base text-white/70 mb-5">Начните с бесплатного таймера — платный попробуете, когда напарник станет нужен.</p>
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <a href="#apply" class="px-6 py-3 bg-tomato text-white border-2 border-cream rounded-xl font-bold shadow-hard-sm-tomato press inline-flex items-center gap-2 justify-center"><i data-lucide="mail" class="w-4 h-4"></i> Заявка на тестирование</a>
+        <a href="demo.html" class="px-6 py-3 bg-white text-basil border-2 border-cream rounded-xl font-bold shadow-hard-sm press inline-flex items-center gap-2 justify-center"><i data-lucide="play" class="w-4 h-4"></i> Смотреть демо</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ПРИВАТНОСТЬ (INTERACTIVE) -->
+<section id="privacy" class="py-16 md:py-24 px-5">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-12 reveal">
+      <div class="inline-flex items-center gap-2 px-4 py-2 bg-tomato-light border-2 border-basil rounded-full shadow-hard-sm font-bold text-sm mb-5"><i data-lucide="shield" class="w-4 h-4"></i> приватность</div>
+      <h2 class="text-3xl md:text-4xl font-black tracking-tighter">Следим за вашим вниманием,<br>а не за вами</h2>
+    </div>
+    <div class="grid md:grid-cols-2 gap-8 items-center">
+      <div class="reveal">
+        <p class="text-base text-basil/75 mb-5">Расширение запоминает один факт: вы ушли с рабочей вкладки и на сколько минут. Куда именно вы ушли — на YouTube или в банк — сервис не узнаёт: адрес вкладки никуда не отправляется.</p>
+        <p class="font-semibold text-sm mb-3">Ничего из этого в Tomatoro нет:</p>
+        <div class="grid grid-cols-2 gap-3 mb-5">
+          <div class="no-shake flex items-center gap-2.5 bg-white border-2 border-basil rounded-xl px-3.5 py-2.5 shadow-hard-sm font-semibold text-sm cursor-default"><span class="text-tomato font-black">✕</span> скриншотов экрана</div>
+          <div class="no-shake flex items-center gap-2.5 bg-white border-2 border-basil rounded-xl px-3.5 py-2.5 shadow-hard-sm font-semibold text-sm cursor-default"><span class="text-tomato font-black">✕</span> доступа к камере</div>
+          <div class="no-shake flex items-center gap-2.5 bg-white border-2 border-basil rounded-xl px-3.5 py-2.5 shadow-hard-sm font-semibold text-sm cursor-default"><span class="text-tomato font-black">✕</span> чтения вкладок</div>
+          <div class="no-shake flex items-center gap-2.5 bg-white border-2 border-basil rounded-xl px-3.5 py-2.5 shadow-hard-sm font-semibold text-sm cursor-default"><span class="text-tomato font-black">✕</span> истории браузера</div>
+        </div>
+        <p class="text-sm text-basil/55 leading-relaxed">На сервер попадают только две вещи: факт ухода и текст вашей цели — тот, который вы сами написали утром. Из них ИИ собирает фразу возвращения, и это всё.</p>
+      </div>
+      <div class="reveal flex justify-center" style="transition-delay:100ms">
+        <div class="bg-white border-2 border-basil rounded-3xl shadow-hard-xl p-6 max-w-xs w-full sticker relative overflow-hidden" id="privacyCard">
+          <div class="flex justify-center mb-4">
+            <div class="tomatoro tomatoro-lg tomatoro-cheerful tomatoro-blink" id="privMascot"><div class="t-body"></div><div class="t-leaf"></div><div class="t-eye l" id="privEyeL"></div><div class="t-eye r" id="privEyeR"></div><div class="t-mouth" id="privMouth"></div></div>
+          </div>
+          <p class="font-display font-bold text-center text-base mb-4">Томаторо знает только одно:</p>
+          <div class="relative">
+            <!-- Browser tab -->
+            <div class="bg-cream border-2 border-basil rounded-xl p-3 mb-3 flex items-center gap-2" id="privTab">
+              <div class="w-4 h-4 bg-tomato rounded-full border border-basil flex-shrink-0" id="privTabDot"></div>
+              <span class="text-xs font-semibold text-basil/50 truncate" id="privTabText">tomatoro.ru — работа</span>
+              <div class="ml-auto flex gap-1"><div class="detect-dot w-2 h-2 bg-leaf rounded-full"></div><div class="detect-dot w-2 h-2 bg-leaf rounded-full"></div><div class="detect-dot w-2 h-2 bg-leaf rounded-full"></div></div>
+            </div>
+            <!-- Server box (no particles between) -->
+            <div class="bg-leaf-light border-2 border-basil rounded-xl p-3">
+              <div class="flex items-center gap-2 mb-2"><i data-lucide="server" class="w-4 h-4 text-leaf"></i><span class="text-xs font-bold">На сервер попадает:</span></div>
+              <div class="space-y-1.5">
+                <div class="flex items-center gap-2 bg-white border border-basil rounded-lg px-2.5 py-1.5"><i data-lucide="check" class="w-3 h-3 text-leaf flex-shrink-0"></i><span class="text-xs font-semibold">факт ухода с вкладки</span></div>
+                <div class="flex items-center gap-2 bg-white border border-basil rounded-lg px-2.5 py-1.5"><i data-lucide="check" class="w-3 h-3 text-leaf flex-shrink-0"></i><span class="text-xs font-semibold">текст вашей цели</span></div>
+              </div>
+            </div>
+            <!-- Blocked items -->
+            <div class="mt-2 flex items-center gap-2 justify-center">
+              <div class="flex items-center gap-1 px-2 py-1 bg-tomato-light/40 border border-basil/30 rounded-md"><span class="text-tomato font-black text-xs">✕</span><span class="text-[10px] font-semibold text-basil/40">URL</span></div>
+              <div class="flex items-center gap-1 px-2 py-1 bg-tomato-light/40 border border-basil/30 rounded-md"><span class="text-tomato font-black text-xs">✕</span><span class="text-[10px] font-semibold text-basil/40">контент</span></div>
+            </div>
+          </div>
+          <!-- Toggle button -->
+          <div class="mt-4 text-center">
+            <button id="privToggle" class="px-4 py-2 bg-tomato text-white border-2 border-basil rounded-xl font-bold text-xs shadow-hard-sm press inline-flex items-center gap-1.5">
+              <i data-lucide="eye-off" class="w-3.5 h-3.5" id="privToggleIcon"></i>
+              <span id="privToggleLabel">свернуть браузер</span>
+            </button>
+          </div>
+          <!-- State indicator -->
+          <div id="privState" class="mt-3 text-center">
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-leaf-light border-2 border-basil rounded-full" id="privStateInner">
+              <div class="w-2 h-2 bg-leaf rounded-full animate-pulse" id="privDot"></div>
+              <span class="text-xs font-bold" id="privStateText">вкладка активна — всё в порядке</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="apply" class="py-16 md:py-20 px-5">
+  <div class="max-w-3xl mx-auto">
+    <div class="reveal bg-basil text-cream rounded-3xl p-10 md:p-14 text-center shadow-[8px_8px_0px_0px_rgba(233,79,55,1)] relative overflow-hidden">
+      <div class="absolute top-6 right-6 w-24 h-24 bg-tomato rounded-full opacity-10 blur-2xl"></div>
+      <div class="relative z-10">
+        <div class="flex justify-center mb-5">
+          <div class="tomatoro tomatoro-lg tomatoro-cheerful tomatoro-blink"><div class="t-body"></div><div class="t-leaf"></div><div class="t-eye l"></div><div class="t-eye r"></div><div class="t-mouth"></div></div>
+        </div>
+        <h2 class="font-display font-black text-2xl md:text-4xl tracking-tighter mb-3">Попробуйте Томаторо раньше остальных</h2>
+        <p class="text-base text-white/60 max-w-md mx-auto mb-7">Мы набираем тестировщиков перед запуском. Оставьте заявку — пришлём доступ, как только откроется следующая волна.</p>
+        <form id="ctaForm" class="flex flex-col sm:flex-row gap-3 max-w-lg mx-auto" onsubmit="return false;">
+          <input type="email" id="ctaEmail" placeholder="твоя@почта.ru" required class="flex-1 px-5 py-3.5 bg-white border-2 border-basil rounded-xl font-semibold text-basil placeholder:text-basil/30 focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(233,79,55,1)] focus:translate-x-[-2px] focus:translate-y-[-2px] transition-all duration-150 min-w-0">
+          <button type="submit" id="ctaSubmit" class="px-6 py-3.5 bg-tomato text-white border-2 border-basil rounded-xl font-bold shadow-[4px_4px_0px_0px_rgba(255,255,255,0.15)] press whitespace-nowrap inline-flex items-center gap-2 justify-center"><i data-lucide="send" class="w-4 h-4"></i> Отправить</button>
+        </form>
+        <div id="ctaOk" class="hidden mt-5 inline-flex items-center gap-2 px-4 py-2.5 bg-leaf/20 border-2 border-leaf/40 rounded-xl"><i data-lucide="check-circle" class="w-5 h-5 text-leaf"></i><span class="font-semibold text-sm">Заявка получена — напишем вам 🎉</span></div>
+        <div class="mt-5"><a href="demo.html" class="text-sm font-semibold text-white/50 hover:text-white underline transition-colors inline-flex items-center gap-1.5"><i data-lucide="play" class="w-3.5 h-3.5"></i> Или сначала посмотрите демо — одна минута, без регистрации</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="border-t-2 border-basil bg-white">
+  <div class="max-w-6xl mx-auto px-5 py-10">
+    <div class="flex flex-wrap gap-3 justify-center mb-8">
+      <a href="presentation.html" class="px-5 py-2.5 bg-white border-2 border-basil rounded-xl font-bold text-sm shadow-hard press inline-flex items-center gap-2"><i data-lucide="presentation" class="w-4 h-4"></i> Презентация</a>
+      <a href="demo.html" class="px-5 py-2.5 bg-tomato text-white border-2 border-basil rounded-xl font-bold text-sm shadow-hard press inline-flex items-center gap-2"><i data-lucide="play" class="w-4 h-4"></i> Демо</a>
+      <a href="extension.html" class="px-5 py-2.5 bg-white border-2 border-basil rounded-xl font-bold text-sm shadow-hard press inline-flex items-center gap-2"><i data-lucide="puzzle" class="w-4 h-4"></i> Макет расширения</a>
+    </div>
+    <div class="text-center text-sm font-semibold text-basil/70 mb-4">Ишмуратов Михаил Алексеевич<br><a href="tel:+79170309936" class="hover:text-basil transition-colors">📞 +7 917 030-99-36</a> · <a href="mailto:ishmuratov.ma@yandex.ru" class="hover:text-basil transition-colors">✉️ ishmuratov.ma@yandex.ru</a> · 🌐 tomatoro.ru</div>
+    <div class="text-center font-display font-black text-sm mb-2">© 2026 Tomatoro</div>
+    <p class="text-xs text-basil/40 max-w-xl mx-auto text-center leading-relaxed">Данный сайт является макетом и сборником презентаций, а не рабочей коммерческой веб-страницей. Персональные данные и Cookie не собираются.</p>
+  </div>
+</footer>
+
+<!-- TOAST -->
+<div id="toast" class="fixed bottom-5 right-5 z-50 bg-white border-2 border-basil rounded-2xl shadow-hard-lg p-4 flex items-center gap-3 translate-y-[130%] opacity-0 transition-all duration-300 pointer-events-none max-w-xs">
+  <div class="w-9 h-9 bg-leaf-light border-2 border-basil rounded-xl flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-4 h-4"></i></div>
+  <p id="toastMsg" class="text-sm font-semibold">OK</p>
+</div>
+
+<script>
+lucide.createIcons();
+
+// Mobile menu
+const menuBtn=document.getElementById('menuBtn'),mobileMenu=document.getElementById('mobileMenu'),menuIcon=document.getElementById('menuIcon');
+let menuOpen=false;
+menuBtn.addEventListener('click',()=>{menuOpen=!menuOpen;mobileMenu.classList.toggle('hidden');menuIcon.setAttribute('data-lucide',menuOpen?'x':'menu');lucide.createIcons()});
+document.querySelectorAll('.mob-link').forEach(a=>a.addEventListener('click',()=>{mobileMenu.classList.add('hidden');menuOpen=false;menuIcon.setAttribute('data-lucide','menu');lucide.createIcons()}));
+
+// CTA form
+const ctaForm=document.getElementById('ctaForm'),ctaEmail=document.getElementById('ctaEmail'),ctaSubmit=document.getElementById('ctaSubmit'),ctaOk=document.getElementById('ctaOk');
+ctaForm.addEventListener('submit',e=>{e.preventDefault();const email=ctaEmail.value.trim();if(!email||!email.includes('@')){ctaEmail.style.borderColor='#E94F37';setTimeout(()=>ctaEmail.style.borderColor='',1500);return}ctaSubmit.disabled=true;ctaSubmit.innerHTML='<span class="animate-pulse">отправка…</span>';setTimeout(()=>{ctaForm.classList.add('hidden');ctaOk.classList.remove('hidden');showToast('Заявка получена — напишем на '+email)},800)});
+
+// Toast
+function showToast(msg){const t=document.getElementById('toast');document.getElementById('toastMsg').textContent=msg;t.classList.remove('translate-y-[130%]','opacity-0','pointer-events-none');t.classList.add('translate-y-0','opacity-100');setTimeout(()=>{t.classList.add('translate-y-[130%]','opacity-0','pointer-events-none');t.classList.remove('translate-y-0','opacity-100')},3500)}
+
+// Scroll reveal
+const obs=new IntersectionObserver(entries=>{entries.forEach(en=>{if(en.isIntersecting)en.target.classList.add('visible')})},{threshold:.08,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+// Smooth scroll
+document.querySelectorAll('a[href^="#"]').forEach(a=>{a.addEventListener('click',function(e){const t=document.querySelector(this.getAttribute('href'));if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth',block:'start'})}})});
+
+// Privacy interactive
+const privToggle=document.getElementById('privToggle'),privToggleLabel=document.getElementById('privToggleLabel'),privToggleIcon=document.getElementById('privToggleIcon');
+const privTab=document.getElementById('privTab'),privTabText=document.getElementById('privTabText'),privTabDot=document.getElementById('privTabDot');
+const privStateText=document.getElementById('privStateText'),privStateInner=document.getElementById('privStateInner'),privDot=document.getElementById('privDot');
+const privMascot=document.getElementById('privMascot'),privMouth=document.getElementById('privMouth');
+const privEyeL=document.getElementById('privEyeL'),privEyeR=document.getElementById('privEyeR');
+let tabActive=true;
+
+privToggle.addEventListener('click',()=>{
+  tabActive=!tabActive;
+  if(!tabActive){
+    privTab.style.opacity='.4';privTab.style.transform='scale(.97)';
+    privTabText.textContent='другая вкладка — не Tomatoro';
+    privTabDot.classList.remove('bg-tomato');privTabDot.classList.add('bg-basil/30');
+    privToggleLabel.textContent='вернуться к работе';privToggleIcon.setAttribute('data-lucide','eye');
+    privStateText.textContent='вы ушли — Томаторо это заметил';
+    privDot.classList.remove('bg-leaf','animate-pulse');privDot.classList.add('bg-mustard');
+    privStateInner.classList.remove('bg-leaf-light');privStateInner.classList.add('bg-mustard/30');
+    // Sad mouth
+    privMouth.style.borderBottom='none';privMouth.style.borderTop='3px solid #1E1B18';
+    privMouth.style.borderRadius='20px 20px 0 0';privMouth.style.height='6px';
+    privMascot.classList.remove('tomatoro-cheerful');
+  } else {
+    privTab.style.opacity='1';privTab.style.transform='scale(1)';
+    privTabText.textContent='tomatoro.ru — работа';
+    privTabDot.classList.add('bg-tomato');privTabDot.classList.remove('bg-basil/30');
+    privToggleLabel.textContent='свернуть браузер';privToggleIcon.setAttribute('data-lucide','eye-off');
+    privStateText.textContent='вкладка активна — всё в порядке';
+    privDot.classList.add('bg-leaf','animate-pulse');privDot.classList.remove('bg-mustard');
+    privStateInner.classList.add('bg-leaf-light');privStateInner.classList.remove('bg-mustard/30');
+    // Happy mouth
+    privMouth.style.borderTop='none';privMouth.style.borderBottom='3px solid #1E1B18';
+    privMouth.style.borderRadius='0 0 20px 20px';privMouth.style.height='10px';
+    privMascot.classList.add('tomatoro-cheerful');
+  }
+  lucide.createIcons();
+});
+
+// Eye tracking
+const privacyCard=document.getElementById('privacyCard');
+privacyCard.addEventListener('mousemove',e=>{
+  const r=privacyCard.getBoundingClientRect();
+  const dx=(e.clientX-r.left-r.width/2)/r.width;
+  const dy=(e.clientY-r.top-r.height/2)/r.height;
+  const m=4;
+  privEyeL.style.transform=`translate(${dx*m}px,${dy*m}px)`;
+  privEyeR.style.transform=`translate(${dx*m}px,${dy*m}px)`;
+});
+privacyCard.addEventListener('mouseleave',()=>{privEyeL.style.transform='';privEyeR.style.transform=''});
+</script>
+</body>
+</html>

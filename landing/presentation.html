@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+<link rel="icon" type="image/png" sizes="64x64" href="img/favicon.png">
+<link rel="apple-touch-icon" href="img/favicon.png">
+<title>Томаторо - презентация</title>
+<!--
+  ═══════════════════════════════════════════════════════════════════════════
+  ТОМАТОРО — интерактивная HTML-презентация (16 слайдов, 1440×810)
+  Дизайн-система: мягкий брутализм (кремовый фон, томатные акценты,
+  толстые рамки, смещённые тени, шрифты Unbounded / Golos Text / JetBrains Mono)
+
+  ▼ КАК ВСТАВИТЬ КАРТИНКИ:
+    Найдите блоки  <div class="img-slot" ...>  — это зарезервированные места.
+    Положите внутрь каждого блока тег картинки:
+        <img src="путь/к/картинке.png" alt="...">
+    Изображение автоматически заполнит рамку (object-fit: cover).
+    Название картинки написано внутри заглушки и в HTML-комментарии рядом.
+
+  ▼ УПРАВЛЕНИЕ:
+    колесо мыши · стрелки ← → ↑ ↓ · пробел · PageUp/PageDown · Home/End
+    кнопки внизу экрана · точки навигации · клавиша F — во весь экран
+  ═══════════════════════════════════════════════════════════════════════════
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&family=Unbounded:wght@500;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#FFF9F0; --tomato:#E94F37; --tomato-dark:#C43D2B; --tomato-light:#F9C4B8;
+  --leaf:#4C9F70; --leaf-light:#CDEBD8; --basil:#1E1B18; --mustard:#F5B841;
+  --mustard-light:#FBEBC2; --lavender:#D9D4F1; --white:#FFFFFF;
+  --ink-soft:rgba(30,27,24,.62);
+  --b3:3px solid var(--basil); --b2:2px solid var(--basil);
+  --sh4:4px 4px 0 var(--basil); --sh5:5px 5px 0 var(--basil); --sh6:6px 6px 0 var(--basil);
+  --r-lg:20px; --r-md:16px; --r-sm:12px;
+  --ease:cubic-bezier(.22,.75,.3,1); --ease-out:cubic-bezier(.16,.84,.3,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:'Golos Text',system-ui,-apple-system,'Segoe UI',sans-serif;
+  background:var(--cream); color:var(--basil);
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+h1,h2,h3{font-family:'Unbounded',sans-serif}
+.mono{font-family:'JetBrains Mono',monospace}
+
+/* ── Фон: точечный паттерн + летящие помидорки ───────────────── */
+#bg-dots{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:radial-gradient(var(--tomato-light) 2px,transparent 2px);
+  background-size:30px 30px;opacity:.4}
+.seed{position:fixed;z-index:0;pointer-events:none;font-size:22px;opacity:0;
+  animation:seedUp linear infinite}
+@keyframes seedUp{
+  0%{transform:translateY(105vh) rotate(0deg);opacity:0}
+  8%{opacity:.28} 92%{opacity:.28}
+  100%{transform:translateY(-12vh) rotate(360deg);opacity:0}
+}
+
+/* ── Сцена 1440×810, масштабируется под окно ─────────────────── */
+#stage{position:absolute;left:50%;top:50%;width:1440px;height:810px;
+  transform:translate(-50%,-50%);transform-origin:center}
+
+/* ── Слайды ──────────────────────────────────────────────────── */
+.slide{position:absolute;inset:0;width:1440px;height:810px;
+  padding:42px 56px;overflow:hidden;background:var(--cream);
+  display:flex;flex-direction:column;
+  opacity:0;pointer-events:none;
+  transform:translateX(90px) scale(.985);
+  transition:opacity .55s var(--ease),transform .55s var(--ease)}
+.slide::before{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+  background-image:radial-gradient(var(--tomato-light) 2px,transparent 2px);
+  background-size:30px 30px;opacity:.35}
+.slide>*{position:relative;z-index:1}
+.slide.active{opacity:1;pointer-events:auto;transform:none;z-index:5;
+  transition:opacity .55s var(--ease),transform .55s var(--ease)}
+.slide.passed{transform:translateX(-90px) scale(.985)}
+.slide-dark{background:var(--basil)}
+.slide-dark::before{opacity:.10;
+  background-image:radial-gradient(rgba(255,249,240,.9) 2px,transparent 2px)}
+.slide-dark .slide-title{color:var(--cream)}
+
+/* появление элементов при входе на слайд */
+.rv{opacity:0;transform:translateY(20px)}
+.slide.active .rv{opacity:1;transform:none;
+  transition:opacity .6s var(--ease-out),transform .6s var(--ease-out);
+  transition-delay:var(--d,0s)}
+
+/* ── Шапка слайда: кикер-чип + заголовок ─────────────────────── */
+.kicker{display:inline-flex;align-items:center;gap:10px;
+  background:var(--mustard);border:var(--b3);border-radius:var(--r-sm);
+  box-shadow:var(--sh4);padding:9px 18px;
+  font-weight:700;font-size:13.5px;line-height:1.25;color:var(--basil);
+  max-width:1180px}
+.kicker .k-ic{font-size:16px;line-height:1;flex-shrink:0}
+.slide-title{font-family:'Unbounded';font-weight:800;font-size:36px;
+  line-height:1.16;letter-spacing:-.5px;margin:16px 0 0;max-width:1240px}
+.slide-title .hl{color:var(--tomato)}
+.slide-head{margin-bottom:22px;flex-shrink:0}
+
+/* ── Сетки и колонки ──────────────────────────────────────────── */
+.cols{display:grid;gap:26px;flex:1 1 auto;min-height:0}
+.cols-64{grid-template-columns:1fr 420px}
+.cols-62{grid-template-columns:1.55fr 1fr}
+.cols-58{grid-template-columns:1.4fr 1fr}
+.cols-55{grid-template-columns:1.2fr 1fr}
+.grow{display:flex;flex-direction:column;gap:14px;min-height:0;flex:0 0 auto}
+.slide>.grow{flex:1 1 auto}
+
+/* ── Карточки ─────────────────────────────────────────────────── */
+.card{background:var(--white);border:var(--b3);border-radius:var(--r-md);
+  box-shadow:var(--sh5);padding:20px 22px}
+.card-sm{padding:14px 18px;border-width:2px;border-radius:var(--r-sm);box-shadow:var(--sh4)}
+.card-tomato{background:var(--tomato);color:var(--white);border-color:var(--basil)}
+.card-basil{background:var(--basil);color:var(--cream)}
+.card-leaf{background:var(--leaf-light)}
+.card-mustard{background:var(--mustard-light)}
+.card-lav{background:var(--lavender)}
+.card-pad-lg{padding:26px 30px}
+
+.lead{font-weight:700;font-size:19px;line-height:1.4}
+.txt{font-size:15px;line-height:1.5;color:var(--basil)}
+.txt-dense{font-size:13.5px;line-height:1.46}
+.txt b,.txt strong{font-weight:700}
+.txt .accent{color:var(--tomato-dark);font-weight:700}
+
+/* ── Лейблы и чипы ────────────────────────────────────────────── */
+.lbl{display:inline-flex;align-items:center;gap:8px;
+  font-family:'Unbounded';font-weight:700;font-size:12px;
+  letter-spacing:.02em;text-transform:uppercase;padding:6px 14px;
+  border:var(--b2);border-radius:10px;box-shadow:3px 3px 0 var(--basil);
+  background:var(--white);width:fit-content}
+.lbl-tomato{background:var(--tomato-dark);color:var(--white)}
+.lbl-leaf{background:var(--leaf);color:var(--white)}
+.lbl-must{background:var(--mustard);color:var(--basil)}
+.lbl-lav{background:var(--lavender);color:var(--basil)}
+.chip{display:inline-flex;align-items:center;gap:6px;
+  font-family:'JetBrains Mono';font-weight:700;font-size:12.5px;
+  background:var(--white);border:var(--b2);border-radius:8px;
+  padding:4px 10px;box-shadow:2px 2px 0 var(--basil)}
+.chip-t{background:var(--tomato);color:var(--white)}
+.chip-m{background:var(--mustard)}
+.chip-g{background:var(--leaf-light)}
+
+/* ── Цифры-гиганты ────────────────────────────────────────────── */
+.stat-big{font-family:'JetBrains Mono';font-weight:800;line-height:.95;
+  letter-spacing:-2px}
+.stat-cap{font-size:15px;line-height:1.45;font-weight:500}
+
+/* ── Списки с галочками / крестиками ──────────────────────────── */
+.check-list{display:flex;flex-direction:column;gap:10px;list-style:none}
+.check-list li{display:flex;gap:12px;align-items:flex-start;
+  font-size:14.5px;line-height:1.45}
+.mark{flex-shrink:0;width:26px;height:26px;border:var(--b2);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:13px;background:var(--leaf);color:var(--white);
+  box-shadow:2px 2px 0 var(--basil);margin-top:1px}
+.mark-x{background:var(--tomato)}
+.mark-n{background:var(--white);font-family:'JetBrains Mono';color:var(--basil)}
+
+/* ── Цитата ───────────────────────────────────────────────────── */
+.quote{position:relative;background:var(--basil);color:var(--cream);
+  border:var(--b3);border-radius:var(--r-md);box-shadow:var(--sh5);
+  padding:20px 24px 20px 58px}
+.quote::before{content:'«';position:absolute;left:16px;top:2px;
+  font-family:'Unbounded';font-weight:900;font-size:52px;color:var(--tomato)}
+.quote p{font-size:13.5px;line-height:1.5;font-weight:500}
+.quote b{color:var(--mustard)}
+
+/* ── Чат-пузырь напарника ─────────────────────────────────────── */
+.bubble{position:relative;background:var(--white);border:var(--b3);
+  border-radius:18px 18px 18px 4px;box-shadow:var(--sh4);
+  padding:16px 18px;display:flex;gap:12px;align-items:flex-start}
+.bubble .ava{flex-shrink:0;width:44px;height:44px;border-radius:50%;
+  background:var(--tomato);border:var(--b3);box-shadow:3px 3px 0 var(--basil);
+  display:flex;align-items:center;justify-content:center;font-size:22px}
+.bubble .b-name{font-family:'Unbounded';font-weight:700;font-size:11.5px;
+  color:var(--tomato-dark);margin-bottom:4px}
+.bubble .b-txt{font-size:14.5px;line-height:1.45}
+
+/* ── ТАРИФЫ ───────────────────────────────────────────────────── */
+.price{display:flex;align-items:baseline;gap:10px}
+.price .p-val{font-family:'JetBrains Mono';font-weight:800;font-size:34px;letter-spacing:-1px}
+.price .p-per{font-size:13px;font-weight:600;opacity:.85}
+
+/* ── МЕСТО ДЛЯ КАРТИНКИ (заглушка) ────────────────────────────── */
+.img-slot{position:relative;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:10px;
+  border:3px dashed rgba(30,27,24,.42);border-radius:var(--r-md);
+  background:repeating-linear-gradient(-45deg,#FFFFFF 0 14px,#FFF3E2 14px 28px);
+  padding:16px;overflow:hidden;flex-shrink:0}
+.img-slot .img-ic{width:44px;height:44px;flex-shrink:0}
+.img-slot .img-t{font-family:'Unbounded';font-weight:700;font-size:13.5px;
+  line-height:1.3;text-align:center;max-width:92%}
+.img-slot .img-sub{font-family:'JetBrains Mono';font-weight:500;font-size:10px;
+  letter-spacing:.12em;text-transform:uppercase;color:rgba(30,27,24,.5);
+  text-align:center}
+/* вставленная пользователем картинка сама заполняет рамку: */
+.img-slot img{position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;border-radius:12px}
+/* вставленный скриншот (has-img): static, контейнер сам держит размер */
+.img-slot.has-img{border-style:solid;border-color:rgba(30,27,24,.9);
+  background:var(--white);padding:0;flex:1 1 auto;min-height:120px}
+.img-slot.has-img img{position:static;object-fit:contain}
+@media print{.img-slot.has-img{min-height:0}}
+
+/* ── Обложка ──────────────────────────────────────────────────── */
+.cover-left{position:absolute;left:0;top:0;bottom:0;width:620px;
+  background:var(--basil);padding:56px 52px;z-index:1;
+  display:flex;flex-direction:column}
+.cover-left::after{content:'';position:absolute;right:-2px;top:0;bottom:0;
+  width:8px;background:var(--tomato)}
+.cover-right{position:absolute;left:620px;right:0;top:0;bottom:0;
+  padding:56px 56px 50px 48px;display:flex;flex-direction:column;gap:18px;z-index:1}
+.brand{display:flex;align-items:center;gap:14px}
+.brand .b-logo{width:58px;height:58px;border-radius:16px;background:var(--tomato);
+  border:var(--b3);box-shadow:var(--sh4);display:flex;align-items:center;
+  justify-content:center;font-size:30px;transform:rotate(-4deg)}
+.brand .b-name{font-family:'Unbounded';font-weight:900;font-size:27px;
+  color:var(--cream);letter-spacing:-.5px}
+.cover-kicker{margin-top:34px}
+.cover-title{font-family:'Unbounded';font-weight:900;font-size:56px;
+  line-height:1.08;color:var(--cream);letter-spacing:-1px;margin-top:14px}
+.cover-title .t-acc{color:var(--tomato)}
+.cover-sub{font-size:18.5px;line-height:1.45;color:var(--tomato-light);
+  font-weight:500;margin-top:18px;max-width:440px}
+.cover-meta{margin-top:auto;display:flex;gap:14px;align-items:center}
+.cover-tomato{position:absolute;right:-14px;bottom:130px;font-size:150px;
+  opacity:.9;transform:rotate(10deg);
+  filter:drop-shadow(8px 8px 0 rgba(233,79,55,.28));
+  animation:tomFloat 5s ease-in-out infinite}
+@keyframes tomFloat{0%,100%{transform:rotate(10deg) translateY(0)}
+  50%{transform:rotate(7deg) translateY(-14px)}}
+
+/* ── Настроения (слайд 5) ─────────────────────────────────────── */
+.mood-row{display:grid;grid-template-columns:repeat(5,1fr);gap:18px}
+.mood-card{display:flex;flex-direction:column;gap:10px}
+.mood-head{display:flex;align-items:center;gap:8px;justify-content:center;
+  border:var(--b3);border-radius:var(--r-sm);box-shadow:var(--sh4);
+  padding:8px 6px;font-family:'Unbounded';font-weight:700;font-size:12px;
+  text-align:center;line-height:1.15;min-height:46px}
+.m-lav{background:var(--lavender)}
+.m-leaf{background:var(--leaf);color:var(--white)}
+.m-must{background:var(--mustard)}
+.m-sad{background:var(--tomato-light)}
+.m-off{background:var(--tomato);color:var(--white)}
+.mood-time{font-family:'JetBrains Mono';font-weight:700;font-size:11.5px;
+  text-align:center;color:var(--basil);
+  background:var(--white);border:var(--b2);border-radius:8px;
+  padding:5px 6px;box-shadow:2px 2px 0 var(--basil)}
+
+/* ── Таймлайн плана (слайд 15) ────────────────────────────────── */
+.tl{display:flex;flex-direction:column;gap:12px;position:relative;padding-left:8px}
+.tl-item{display:flex;gap:16px;align-items:flex-start}
+.tl-week{flex-shrink:0;width:132px;font-family:'JetBrains Mono';font-weight:800;
+  font-size:13px;background:var(--mustard);border:var(--b2);border-radius:10px;
+  box-shadow:3px 3px 0 var(--basil);padding:8px 10px;text-align:center}
+.tl-body{background:var(--white);border:var(--b2);border-radius:var(--r-sm);
+  box-shadow:var(--sh4);padding:10px 16px;font-size:13.5px;line-height:1.42;
+  flex:1}
+.tl-body b{color:var(--tomato-dark)}
+
+/* ── Интерфейс навигации (вне сцены) ──────────────────────────── */
+#ui{position:fixed;inset:0;z-index:50;pointer-events:none;
+  font-family:'JetBrains Mono',monospace}
+#progress{position:absolute;left:0;top:0;height:7px;width:100%;
+  background:rgba(30,27,24,.12);border-bottom:2px solid var(--basil)}
+#progress .bar{height:100%;width:0;background:var(--tomato);
+  transition:width .5s var(--ease)}
+#hud{position:absolute;left:0;right:0;bottom:0;height:64px;
+  display:flex;align-items:center;gap:18px;padding:0 22px}
+#counter{font-weight:800;font-size:15px;letter-spacing:.04em;
+  background:var(--white);border:var(--b3);border-radius:var(--r-sm);
+  box-shadow:var(--sh4);padding:8px 14px;pointer-events:auto}
+#counter .cur{color:var(--tomato-dark)}
+#dots{display:flex;gap:7px;margin:0 auto;pointer-events:auto;flex-wrap:wrap;
+  justify-content:center;max-width:60%}
+.dot{width:13px;height:13px;border-radius:50%;border:2.5px solid var(--basil);
+  background:var(--white);cursor:pointer;padding:0;
+  transition:transform .18s var(--ease),background .18s}
+.dot:hover{transform:scale(1.25)}
+.dot.on{background:var(--tomato);transform:scale(1.2);
+  box-shadow:2px 2px 0 var(--basil)}
+.nav-btn{width:46px;height:46px;border-radius:var(--r-sm);border:var(--b3);
+  background:var(--white);cursor:pointer;pointer-events:auto;
+  box-shadow:var(--sh4);display:flex;align-items:center;justify-content:center;
+  transition:all .12s}
+.nav-btn:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--basil)}
+.nav-btn:active{transform:translate(4px,4px);box-shadow:0 0 0 var(--basil)}
+.nav-btn.main{background:var(--tomato)}
+.nav-btn.main svg path{stroke:var(--white)}
+#nav-btns{display:flex;gap:12px;pointer-events:none}
+#fs-btn svg path{stroke:var(--basil)}
+#hint{position:absolute;left:50%;bottom:76px;transform:translateX(-50%);
+  background:var(--basil);color:var(--cream);border-radius:12px;
+  border:var(--b2);box-shadow:var(--sh4);padding:9px 18px;
+  font-size:12px;font-weight:700;letter-spacing:.02em;white-space:nowrap;
+  transition:opacity .6s,transform .6s}
+#hint.off{opacity:0;transform:translateX(-50%) translateY(14px)}
+#hint b{color:var(--mustard)}
+
+/* ── Тарифы (слайд 11): плотнее, чтобы всё вошло ── */
+#s11 .card-sm{padding:12px 16px}
+#s11 .check-list{gap:6px}
+#s11 .check-list li{font-size:13px}
+#s11 .price .p-val{font-size:27px}
+#s11 .lbl{font-size:10.5px}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001s !important;transition-duration:.001s !important}
+}
+/* ── ВСТАВЛЕННЫЕ СКРИНШОТЫ ────────────────────────────── */
+      .img-slot img.shot{width:100%;height:100%;object-fit:contain;display:block;background:var(--white)}
+      .img-slot.has-img{padding:0;overflow:hidden}
+      .img-slot.has-img .img-ic,.img-slot.has-img .img-t,.img-slot.has-img .img-sub{display:none}
+</style>
+</head>
+<body>
+
+<div id="bg-dots"></div>
+<div id="seeds"></div>
+
+<div id="stage">
+<!-- ═══════════════ СЛАЙД 1 · ОБЛОЖКА ═══════════════ -->
+<section class="slide" id="s1">
+  <div class="cover-left">
+    <div class="brand rv" style="--d:.05s">
+      <div class="b-logo">🍅</div>
+      <div class="b-name">Томаторо</div>
+    </div>
+    <div class="cover-kicker rv" style="--d:.15s">
+      <span class="lbl lbl-must">⚡ Productivity &amp; Work</span>
+    </div>
+    <h1 class="cover-title rv" style="--d:.25s">Напарник<br>по <span class="t-acc">фокусу</span></h1>
+    <p class="cover-sub rv" style="--d:.35s">Томаторо — ИИ-помощник в&nbsp;фокусировке по&nbsp;методу Помодоро</p>
+    <div class="cover-meta rv" style="--d:.45s">
+      <span class="chip" style="background:var(--basil);color:var(--mustard);border-color:var(--cream)">2026</span>
+      <span class="chip" style="background:var(--basil);color:var(--cream);border-color:var(--cream)">🇷🇺 русский продукт</span>
+    </div>
+    <div class="cover-tomato">🍅</div>
+  </div>
+  <div class="cover-right">
+    <div class="card rv" style="--d:.3s">
+      <span class="lbl lbl-tomato">⚠ Проблема</span>
+      <p class="txt" style="margin-top:12px">Пообещать себе «сейчас доделаю» легко. Удержать фокус, когда никто не&nbsp;смотрит, — почти невозможно</p>
+    </div>
+    <div class="card rv" style="--d:.42s">
+      <span class="lbl lbl-leaf">💡 Гипотеза</span>
+      <p class="txt" style="margin-top:12px">ИИ сопровождает работу над задачей: замечает отвлечения, отслеживает прогресс и&nbsp;мягко возвращает к&nbsp;цели — эффект внешнего контроля, как будто напарник работает рядом</p>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="card card-sm card-mustard rv" style="--d:.54s">
+        <span class="lbl" style="font-size:10.5px">Усиление №1</span>
+        <p class="txt txt-dense" style="margin-top:10px">Работа ИИ-помощника построена не&nbsp;просто так, а&nbsp;внутри фреймворка тайм-менеджмента <b>Помодоро</b></p>
+      </div>
+      <div class="card card-sm card-lav rv" style="--d:.64s">
+        <span class="lbl" style="font-size:10.5px">Усиление №2</span>
+        <p class="txt txt-dense" style="margin-top:10px"><b>Геймификация</b> позволяет усилить вовлечённость и&nbsp;мотивацию пользователей, а&nbsp;также повысить эффекты от&nbsp;сервиса в&nbsp;целом на&nbsp;жизнь пользователей</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ СЛАЙД 2 · ПРОБЛЕМА ═══════════════ -->
+<section class="slide" id="s2">
+  <div class="slide-head">
+    <div class="kicker rv"><span class="k-ic">🏠</span>Работая из дома, люди лишились того, кто был для них совестью и надзирателем</div>
+    <h2 class="slide-title rv" style="--d:.08s">Проблема: дома никто <span class="hl">не замечает</span>, что вы отвлеклись</h2>
+  </div>
+  <div class="cols cols-64" style="">
+    <div class="grow">
+      <p class="lead rv" style="--d:.15s">Работа переехала домой, а&nbsp;дисциплина осталась в&nbsp;офисе.</p>
+      <p class="txt txt-dense rv" style="--d:.22s">В&nbsp;офисе рядом были коллеги: они видели, что вы полчаса сидели в&nbsp;ютубе или телеграмме и&nbsp;недовольно зыркали, шепчась за&nbsp;спиной. Руководитель подходил спросить, как задача — или просто ходил мимо как&nbsp;бы невзначай, поглядывая на&nbsp;экран вашего монитора. Иногда это бесило, но&nbsp;именно это внешнее внимание дисциплинирует.</p>
+      <p class="txt txt-dense rv" style="--d:.3s">Дома никого нет. Пошёл проверить уведомления на&nbsp;минуту, и&nbsp;завис на&nbsp;три часа в&nbsp;соцсетях. День формально закрыт: с&nbsp;10 до&nbsp;19 вы «были на&nbsp;работе». А&nbsp;по&nbsp;факту за&nbsp;это время получилось <b class="accent">2–3 часа настоящей работы</b> — остальные часы ушли на&nbsp;мессенджер, видео, и&nbsp;перерывы, которые незаметно становятся длинными.</p>
+      <p class="txt txt-dense rv" style="--d:.38s">Это знакомо каждому, кто работает без коллег рядом. Психологи могут сколько угодно рассказывать про необходимость воспитывать внутреннего взрослого, на&nbsp;практике этот внутренний взрослый — мудрый и&nbsp;дисциплинированный сам по&nbsp;себе, без надзора — остаётся просто мечтой.</p>
+      <div class="card card-sm rv" style="--d:.46s">
+        <span class="lbl lbl-tomato" style="font-size:10.5px">📊 Проблема в цифрах</span>
+        <div style="display:flex;gap:14px;margin-top:12px;align-items:stretch">
+          <div style="flex:1;display:flex;gap:12px;align-items:center">
+            <span class="chip chip-t" style="font-size:17px;padding:8px 12px">1/7</span>
+            <span class="txt txt-dense">каждый седьмой работающий россиянин прокрастинирует регулярно <span class="mono" style="font-size:11px;color:var(--ink-soft)"><a href="https://www.snob.ru/news/prokrastinaciya-ekazhdogo-sedmogo-rossiyanina-nosit-hronicheskiy-harakter/" target="_blank" style="color:inherit;text-decoration:underline">Snob.ru</a></span></span>
+          </div>
+          <div style="width:2px;background:var(--basil);opacity:.2"></div>
+          <div style="flex:1;display:flex;gap:12px;align-items:center">
+            <span class="chip chip-t" style="font-size:17px;padding:8px 12px">53%</span>
+            <span class="txt txt-dense">отвлекаются на&nbsp;телефон в&nbsp;рабочее время <span class="mono" style="font-size:11px;color:var(--ink-soft)"><a href="https://rb.ru/news/procrastination-at-work/" target="_blank" style="color:inherit;text-decoration:underline">RB.ru</a></span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="grow">
+      <div class="card card-tomato card-pad-lg rv" style="--d:.25s;flex:1;display:flex;flex-direction:column;justify-content:center">
+        <div class="stat-big" style="font-size:84px">2–3<span style="font-size:38px;letter-spacing:-1px"> часа</span></div>
+        <div class="stat-big" style="font-size:34px;color:var(--tomato-light);margin-top:6px">из 8</div>
+        <div style="height:3px;background:rgba(255,255,255,.35);border-radius:3px;margin:18px 0"></div>
+        <p class="stat-cap">столько реальной работы остаётся в&nbsp;дне удалёнщика</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ СЛАЙД 3 · ПОЧЕМУ ТАЙМЕР НЕ ПОМОГАЕТ ═══════════════ -->
+<section class="slide" id="s3">
+  <div class="slide-head">
+    <div class="kicker rv"><span class="k-ic">⏱</span>Таймер будет тикать, даже если человек ушёл и забыл про него</div>
+    <h2 class="slide-title rv" style="--d:.08s">Почему один таймер <span class="hl">не помогает</span></h2>
+  </div>
+  <div class="cols cols-58" style="">
+    <div class="grow">
+      <div class="card card-sm rv" style="--d:.15s">
+        <p class="txt txt-dense"><b class="accent">Классика Помодоро:</b> ставишь 25&nbsp;минут и&nbsp;работаешь. Проблема в&nbsp;том, что таймер не&nbsp;видит, чем вы заняты. Ушли в&nbsp;соцсети на&nbsp;40&nbsp;минут — он всё равно оттикает до&nbsp;конца и&nbsp;решит, что сессия удалась.</p>
+      </div>
+      <div class="card card-sm rv" style="--d:.23s">
+        <p class="txt txt-dense"><b class="accent">Слабое место метода:</b> он целиком держится на&nbsp;вашей дисциплине. Но&nbsp;метод нужен именно тогда, когда её не&nbsp;хватает, а&nbsp;он добавляет нагрузки, требует запускать таймер, следить самому за&nbsp;собой.</p>
+      </div>
+      <div class="card card-sm rv" style="--d:.31s">
+        <p class="txt txt-dense"><b class="accent">Вторая слабость метода:</b> работать по&nbsp;таймеру в&nbsp;одиночку скучно. Не&nbsp;случайно взлетел виртуальный коворкинг Focusmate — сайт, где вас сажают в&nbsp;видеозвонок с&nbsp;незнакомцем, чтобы «работать рядом» с&nbsp;ним. Работает не&nbsp;минутомер, а&nbsp;присутствие других людей. Но&nbsp;камера, следящая за&nbsp;тобой, и&nbsp;чужое расписание подходят не&nbsp;всем.</p>
+      </div>
+    </div>
+    <div class="grow">
+      <div class="card card-tomato card-pad-lg rv" style="--d:.28s;flex:1.25;display:flex;flex-direction:column;justify-content:center;gap:14px">
+        <div style="font-size:44px;line-height:1">🍅</div>
+        <p style="font-family:'Unbounded';font-weight:700;font-size:19px;line-height:1.35">Tomatoro берёт метод Помодоро целиком — таймер, задачи, перерывы между спринтами — и&nbsp;добавляет в&nbsp;него <span style="color:var(--mustard)">напарника</span></p>
+      </div>
+      <div class="card card-sm card-leaf rv" style="--d:.4s">
+        <span class="lbl lbl-leaf" style="font-size:10.5px">🆓 Бесплатный фундамент</span>
+        <p class="txt txt-dense" style="margin-top:10px">Базовый таймер бесплатен и&nbsp;работает без&nbsp;ИИ: это полноценный рабочий инструмент, который приучает пользователя к&nbsp;методу, на&nbsp;котором построены более продвинутые функции с&nbsp;ИИ.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ СЛАЙД 4 · ВАУ-ЭФФЕКТ: НАПАРНИК ГОВОРИТ ═══════════════ -->
+<section class="slide" id="s4">
+  <div class="slide-head">
+    <div class="kicker rv" style="background:var(--tomato-dark);color:var(--white)"><span class="k-ic">✨</span>Вау-эффект</div>
+    <h2 class="slide-title rv" style="--d:.08s">Напарник, который <span class="hl">с вами говорит</span></h2>
+  </div>
+  <div class="cols cols-55" style="">
+    <div class="grow">
+      <p class="txt txt-dense rv" style="--d:.15s">Утром Томаторо спросит пользователя о&nbsp;задачах на&nbsp;день, а&nbsp;пользователь распределит их по&nbsp;спринтам и&nbsp;помодоро. Какие вкладки считать рабочими, Томаторо уже знает. Со&nbsp;стартом первого спринта начинается цикл помодоро.</p>
+      <p class="txt txt-dense rv" style="--d:.22s">Ушли с&nbsp;вкладки — расширение это видит. Через <b class="accent">4&nbsp;минуты</b> Томаторо, в&nbsp;веб-кабинете маскот персонаж-помидор, сам присылает уведомление:</p>
+      <div class="bubble rv" style="--d:.3s">
+        <div class="ava">🍅</div>
+        <div>
+          <div class="b-name">TOMATORO · уведомление</div>
+          <p class="b-txt">«Пропал на 4 минуты. Задача ждёт: <b>„Надо написать три абзаца статьи“</b>. Продолжаем?»</p>
+        </div>
+      </div>
+      <p class="txt txt-dense rv" style="--d:.38s">Возвращаться, чтобы получить оклик, не&nbsp;нужно. Не&nbsp;среагировали — через <b>8&nbsp;минут</b> тон сменится на&nbsp;грустный, через <b>12</b> — на&nbsp;обиженный, но&nbsp;тёплый. Ругаться он не&nbsp;умеет и&nbsp;наказывать не&nbsp;станет.</p>
+      <div class="card card-sm card-leaf rv" style="--d:.46s">
+        <p class="txt txt-dense"><b>🔒 Приватность.</b> За&nbsp;пользователем никто не&nbsp;следит: расширение не&nbsp;видит, куда ушёл пользователь — YouTube или банковское приложение, для&nbsp;Томаторо это просто «отсутствовал 6&nbsp;минут».</p>
+      </div>
+    </div>
+    <div class="grow">
+      <!-- ▼ МЕСТО ДЛЯ КАРТИНКИ №1: скриншот окна расширения с уведомлением ИИ-напарника -->
+      <div class="img-slot rv has-img" style="style="--d:.3s;flex:1""><img class="shot" src="img/extension-notify.png" alt="Скриншот Tomatoro"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ СЛАЙД 5 · НАСТРОЕНИЕ НАПАРНИКА ═══════════════ -->
+<section class="slide" id="s5">
+  <div class="slide-head">
+    <div class="kicker rv" style="background:var(--tomato-dark);color:var(--white)"><span class="k-ic">✨</span>Вау-эффект: напарник, который с вами говорит</div>
+    <h2 class="slide-title rv" style="--d:.08s">Настроение напарника <span class="hl">зависит от поведения</span> пользователя</h2>
+  </div>
+  <div class="grow" style="justify-content:center">
+    <div class="mood-row">
+      <!-- ▼ МЕСТО ДЛЯ КАРТИНКИ №2: уведомление «Механический шаблон» (без ИИ) -->
+      <div class="mood-card rv" style="--d:.15s">
+        <div class="mood-head m-lav"><span>🤖</span>Механический шаблон</div>
+        <div class="img-slot has-img" style="style="height:100%""><img class="shot" src="img/push-basic.png" alt="Скриншот Tomatoro"></div>
+        <div class="mood-time">статичное уведомление · без ИИ</div>
+      </div>
+      <!-- ▼ МЕСТО ДЛЯ КАРТИНКИ №3: уведомление «Бодрый» -->
+      <div class="mood-card rv" style="--d:.23s">
+        <div class="mood-head m-leaf"><span>🙂</span>Бодрый</div>
+        <div class="img-slot has-img" style="style="height:100%""><img class="shot" src="img/push-cheerful.png" alt="Скриншот Tomatoro"></div>
+        <div class="mood-time">через 1–3 минуты</div>
+      </div>
+      <!-- ▼ МЕСТО ДЛЯ КАРТИНКИ №4: уведомление «Встревоженный» -->
+      <div class="mood-card rv" style="--d:.31s">
+        <div class="mood-head m-must"><span>😟</span>Встревоженный</div>
+        <div class="img-slot has-img" style="style="height:100%""><img class="shot" src="img/push-worried.png" alt="Скриншот Tomatoro"></div>
+        <div class="mood-time">через 4 минуты</div>
+      </div>
+      <!-- ▼ МЕСТО ДЛЯ КАРТИНКИ №5: уведомление «Грустный» -->
+      <div class="mood-card rv" style="--d:.39s">
+        <div class="mood-head m-sad"><span>😢</span>Грустный</div>
+        <div class="img-slot has-img" style="style="height:100%""><img class="shot" src="img/push-sad.png" alt="Скриншот Tomatoro"></div>
+        <div class="mood-time">через 8 минут</div>
+      </div>
+      <!-- ▼ МЕСТО ДЛЯ КАРТИНКИ №6: уведомление «Обиженный» -->
+      <div class="mood-card rv" style="--d:.47s">
+        <div class="mood-head m-off"><span>😤</span>Обиженный, но&nbsp;тёплый</div>
+        <div class="img-slot has-img" style="style="height:100%""><img class="shot" src="img/push-offended.png" alt="Скриншот Tomatoro"></div>
+        <div class="mood-time">через 12 минут</div>
+      </div>
+    </div>
+    <div class="card card-sm rv" style="--d:.55s;align-self:center;display:flex;gap:12px;align-items:center;padding:12px 22px">
+      <span class="chip chip-g">4 мин</span><span style="font-family:'JetBrains Mono';font-weight:800">→</span>
+      <span class="chip chip-m">8 мин</span><span style="font-family:'JetBrains Mono';font-weight:800">→</span>
+      <span class="chip chip-t">12 мин</span>
+      <span class="txt txt-dense" style="font-weight:600">— эскалация эмоций ИИ-напарника. Агрессии нет никогда: маскот не&nbsp;ругается и&nbsp;не&nbsp;наказывает.</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ СЛАЙД 6 · ДЕНЬ С TOMATORO ═══════════════ -->
+<section class="slide" id="s6">
+  <div class="slide-head">
+    <div class="kicker rv"><span class="k-ic">🗓</span>Утро — план. День — спринты с задачами. Вечер — итоги</div>
+    <h2 class="slide-title rv" style="--d:.08s;font-size:34px">Как выглядит день с Tomatoro <span class="hl">с точки зрения пользователя</span></h2>
+  </div>
+  <div class="cols cols-58" style="">
+    <div class="grow">
+      <div class="card card-sm rv" style="--d:.15s;display:flex;gap:14px">
+        <div style="flex-shrink:0;width:44px;height:44px;border-radius:12px;background:var(--mustard);border:var(--b2);box-shadow:3px 3px 0 var(--basil);display:flex;align-items:center;justify-content:center;font-size:20px">🌅</div>
+        <p class="txt txt-dense"><b>Утро.</b> Открываете кабинет — Томаторо спрашивает, что в&nbsp;фокусе сегодня. Выбираете 2–7 задач; на&nbsp;платном тарифе ИИ сам предложит черновик по&nbsp;вчерашним итогам.</p>
+      </div>
+      <div class="card card-sm rv" style="--d:.23s;display:flex;gap:14px">
+        <div style="flex-shrink:0;width:44px;height:44px;border-radius:12px;background:var(--tomato-light);border:var(--b2);box-shadow:3px 3px 0 var(--basil);display:flex;align-items:center;justify-content:center;font-size:20px">☀️</div>
+        <p class="txt txt-dense"><b>День.</b> Рабочее время собирается из&nbsp;помодоро, помодоро — из&nbsp;спринтов по&nbsp;25&nbsp;минут. Задачу кликом назначаете целью спринта; планы поменялись — переносите задачи между спринтами.<br><br>Всё это видно на&nbsp;таймлайне дня: спринты, перерывы, длинный отдых — что завершено, что впереди.</p>
+      </div>
+      <div class="card card-sm rv" style="--d:.31s;display:flex;gap:14px">
+        <div style="flex-shrink:0;width:44px;height:44px;border-radius:12px;background:var(--lavender);border:var(--b2);box-shadow:3px 3px 0 var(--basil);display:flex;align-items:center;justify-content:center;font-size:20px">🌙</div>
+        <p class="txt txt-dense"><b>Вечер.</b> Итоги дня: план против факта, сколько спринтов прошли успешно, где увязли. ИИ добавляет короткий совет на&nbsp;завтра. Невыполненное переносится на&nbsp;завтра одной кнопкой.</p>
+      </div>
+      <div class="card card-sm card-mustard rv" style="--d:.39s">
+        <p class="txt txt-dense"><b>⚙️ Всё настраивается.</b> Все параметры, длительность спринтов, перерывов, задачи — настраиваются и&nbsp;редактируются.</p>
+      </div>
+    </div>
+    <div class="grow">
+      <!-- ▼ МЕСТО ДЛЯ КАРТИНКИ №7: скриншот веб-кабинета (таймлайн дня, текущий спринт) -->
+      <div class="img-slot rv has-img" style="style="--d:.3s;flex:1""><img class="shot" src="img/today.png" alt="Скриншот Tomatoro"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ СЛАЙД 7 · МЯГКАЯ МОТИВАЦИЯ ═══════════════ -->
+<section class="slide" id="s7">
+  <div class="slide-head">
+    <div class="kicker rv"><span class="k-ic">⚖️</span>Конкуренты мотивируют страхом: пользователи стрессуют и уходят</div>
+    <h2 class="slide-title rv" style="--d:.08s">Мягкая мотивация <span class="hl">вместо наказания</span></h2>
+  </div>
+  <div class="cols cols-62" style="">
+    <div class="grow">
+      <div class="card card-sm rv" style="--d:.15s">
+        <p class="txt txt-dense"><b>🌳 Forest</b> — популярный таймер-игра: посадил дерево на&nbsp;время работы, ушёл из&nbsp;приложения — дерево погибло. Механика наказания стала главным предметом жалоб: пользователи бросали приложение, обидно терять результат из-за одного срыва.</p>
+      </div>
+      <div class="card card-sm rv" style="--d:.22s">
+        <p class="txt txt-dense"><b>🎥 Focusmate</b> давит другим способом: камера незнакомца и&nbsp;чужое расписание. Мы исходим из&nbsp;другого принципа: <b class="accent">срыв — это момент, когда человеку нужна поддержка, а&nbsp;не&nbsp;наказание и&nbsp;скандал</b>.</p>
+      </div>
+      <div class="card card-sm rv" style="--d:.29s">
+        <span class="lbl lbl-leaf" style="font-size:10.5px">💚 Поэтому в Tomatoro</span>
+        <ul class="check-list" style="margin-top:12px">
+          <li><span class="mark">✓</span><span>напарник при провале не&nbsp;злится — он грустит, тон остаётся тёплым (это прописано в&nbsp;промпте ИИ);</span></li>
+          <li><span class="mark">✓</span><span>срыв не&nbsp;обнуляет день: спринт с&nbsp;возвращениями всё равно приносит очки, просто меньше;</span></li>
+          <li><span class="mark">✓</span><span>пользователь может «подбодрить» расстроившегося напарника за&nbsp;очки фокусировки — и&nbsp;тот снова бодрый.</span></li>
+        </ul>
+      </div>
+      <div class="quote rv" style="--d:.38s">
+        <p>«Наказание за срыв теряет пользователя ровно в&nbsp;тот момент, когда ему нужно вернуться. У&nbsp;конкурента наказание — <b>мёртвое дерево</b>. У&nbsp;нас — <b>напарник, который грустит, и&nbsp;очки, которые всё равно начисляются</b>. Это принципиальный выбор продукта, и&nbsp;он подтверждён жалобами пользователей конкурентов.»</p>
+      </div>
+    </div>
+    <div class="grow">
+      <!-- ▼ МЕСТО ДЛЯ КАРТИНКИ №8: скриншот маскота «Бодрый» и истории дня -->
+      <div class="img-slot rv has-img" style="style="--d:.3s;flex:1""><img class="shot" src="img/mascot-cheerful.png" alt="Скриншот Tomatoro"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ СЛАЙД 8 · МЯГКАЯ МОТИВАЦИЯ В UX ═══════════════ -->
+<section class="slide" id="s8">
+  <div class="slide-head">
+    <div class="kicker rv"><span class="k-ic">💛</span>Ни один элемент интерфейса не стыдит пользователя</div>
+    <h2 class="slide-title rv" style="--d:.08s">Мягкая мотивация в UX: <span class="hl">конкретные решения</span></h2>
+  </div>
+  <div class="cols cols-58" style="">
+    <div class="grow">
+      <div class="card card-sm rv" style="--d:.15s;display:flex;gap:14px">
+        <span class="mark mark-n">1</span>
+        <p class="txt txt-dense"><b>Мотивирующий график.</b> Аналитика показывает «Динамику фокуса»: кривая факта колеблется по&nbsp;дням, но&nbsp;поверх идёт штриховая линия тренда — она растёт. Подпись на&nbsp;графике: «Ты прогрессируешь, даже если были провалы». Пользователь видит рост, а&nbsp;не&nbsp;журнал ошибок.</p>
+      </div>
+      <div class="card card-sm rv" style="--d:.22s;display:flex;gap:14px">
+        <span class="mark mark-n">2</span>
+        <p class="txt txt-dense"><b>Напарник грустит, а&nbsp;не&nbsp;злится.</b> Тон реплик прописан в&nbsp;промптах ИИ: бодрый&nbsp;→ грустный&nbsp;→ обиженный, но&nbsp;тёплый. Никогда нет агрессии.</p>
+      </div>
+      <div class="card card-sm rv" style="--d:.29s;display:flex;gap:14px">
+        <span class="mark mark-n">3</span>
+        <p class="txt txt-dense"><b>Цвета без стресса.</b> Таймер при отвлечении — горчичный, не&nbsp;красный. Красный — только для системных ошибок. Срыв пользователя — не&nbsp;ошибка системы.</p>
+      </div>
+      <div class="card card-sm rv" style="--d:.36s;display:flex;gap:14px">
+        <span class="mark mark-n">4</span>
+        <p class="txt txt-dense"><b>Честные баллы.</b> Спринт с&nbsp;возвращениями засчитывается в&nbsp;очки — за&nbsp;то, что вернулся и&nbsp;доделал. Итоги дня: «план против факта» без&nbsp;осуждения, один совет вместо нотаций, угроз и&nbsp;прививания чувств вины за&nbsp;увядшее дерево.</p>
+      </div>
+      <div class="card card-sm rv" style="--d:.43s;display:flex;gap:14px">
+        <span class="mark mark-n">5</span>
+        <p class="txt txt-dense"><b>Управление в&nbsp;руках пользователя.</b> Настроить строгость, паузу, «честный перерыв» вместо спринта — выбор всегда за&nbsp;человеком.</p>
+      </div>
+    </div>
+    <div class="grow">
+      <!-- ▼ МЕСТО ДЛЯ КАРТИНКИ №9: скриншот графика «Динамика фокуса» -->
+      <div class="img-slot rv has-img" style="style="--d:.3s;flex:1""><img class="shot" src="img/focus-dynamics.png" alt="Скриншот Tomatoro"></div>
+      <div class="card card-sm card-lav rv" style="--d:.42s">
+        <p class="txt txt-dense" style="font-weight:600">📈 Штриховая линия тренда растёт поверх колебаний — пользователь видит рост, а не журнал ошибок.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ СЛАЙД 9 · ГЕЙМИФИКАЦИЯ ═══════════════ -->
+<section class="slide" id="s9">
+  <div class="slide-head">
+    <div class="kicker rv"><span class="k-ic">🎮</span>Игровая экономика, связанная с реальной пользой</div>
+    <h2 class="slide-title rv" style="--d:.08s;font-size:34px">Геймификация: вовлечение и&nbsp;мотивация <span class="hl">работать над собой</span></h2>
+  </div>
+  <div class="cols cols-62" style="">
+    <div class="grow">
+      <p class="txt txt-dense rv" style="--d:.15s;font-weight:600">В&nbsp;сервисе есть две внутренние валюты — <b class="accent">помидорки</b> и&nbsp;<b class="accent">очки фокуса</b> — и&nbsp;уровни.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="card card-sm rv" style="--d:.22s">
+          <span class="lbl lbl-tomato">🍅 Помидорки</span>
+          <p class="txt txt-dense" style="margin-top:10px">Позволяют снижать стоимость платного тарифа вплоть до&nbsp;нуля. Получаются по&nbsp;итогам дня без единого провала спринта.</p>
+        </div>
+        <div class="card card-sm rv" style="--d:.29s">
+          <span class="lbl lbl-must">⚡ Очки фокуса</span>
+          <p class="txt txt-dense" style="margin-top:10px">Позволяют влиять на&nbsp;настроение ИИ-напарника, прокачивать уровни и&nbsp;покупать помидорки. Получаются понемногу за&nbsp;каждый маленький успех.</p>
+        </div>
+      </div>
+      <div class="card card-sm rv" style="--d:.36s">
+        <p class="txt txt-dense"><b>🏆 Уровни.</b> Каждый уровень даёт бонус к&nbsp;росту очков фокуса. При системных срывах уровни могут понижаться. <b>🔥 Стрик</b> — дни фокуса подряд. Разорвать жалко, продолжить приятно.</p>
+      </div>
+      <div class="card card-sm card-leaf rv" style="--d:.43s">
+        <span class="lbl lbl-leaf" style="font-size:10.5px">📈 Зачем это сервису</span>
+        <p class="txt txt-dense" style="margin-top:10px">Геймификация возвращает пользователя каждый день и&nbsp;мотивирует улучшать свои результаты. Активный пользователь может поддерживать платный уровень подписки бесплатно (на&nbsp;время активного роста сервиса как часть маркетинга). <b>Пользователь работает над собой, а&nbsp;сервис получает рост вовлечения, виральность и&nbsp;лояльность пользователей.</b></p>
+      </div>
+    </div>
+    <div class="grow">
+      <!-- ▼ МЕСТО ДЛЯ КАРТИНКИ №10: карточка уровня -->
+      <div class="img-slot rv has-img" style="--d:.3s"><img class="shot" src="img/gamification.png" alt="Скриншот Tomatoro"></div>
+      <!-- ▼ МЕСТО ДЛЯ КАРТИНКИ №11: виджет «Помидорки» -->
+      <div class="img-slot rv has-img" style="--d:.4s;height:100%"><img class="shot" src="img/currency.png" alt="Скриншот Tomatoro"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ СЛАЙД 10 · ЧАСТОТНОСТЬ ═══════════════ -->
+<section class="slide" id="s10">
+  <div class="slide-head">
+    <div class="kicker rv"><span class="k-ic">🔁</span>Помодоро длится около 25 минут — каждый следующий это повод вернуться</div>
+    <h2 class="slide-title rv" style="--d:.08s">Частотность: продукт <span class="hl">открывают весь день</span></h2>
+  </div>
+  <div class="cols cols-58" style="">
+    <div class="grow">
+      <p class="lead rv" style="--d:.15s;font-size:17px">Рабочий день с Tomatoro:</p>
+      <ul class="check-list">
+        <li class="rv" style="--d:.22s"><span class="mark">🍅</span><span class="txt txt-dense"><b>3–6 спринтов</b> — норма фрилансера, удалёнщика или студента; каждый спринт требует старта и&nbsp;финиша в&nbsp;сервисе;</span></li>
+        <li class="rv" style="--d:.29s"><span class="mark">⚓</span><span class="txt txt-dense"><b>2 якоря дня:</b> утренний план (08:00–11:00) и&nbsp;итоги дня (после 18:00) — два открытия в&nbsp;день даже без спринтов;</span></li>
+        <li class="rv" style="--d:.36s"><span class="mark">↩️</span><span class="txt txt-dense">возвраты после отвлечений, паузы, проверка уровней, подбадривание ИИ-напарника, управление задачами.</span></li>
+      </ul>
+      <div class="card card-tomato card-pad-lg rv" style="--d:.43s;flex:1;display:flex;flex-direction:column;justify-content:center;gap:8px">
+        <div class="stat-big" style="font-size:58px">12–18</div>
+        <p class="stat-cap" style="font-weight:600">обращений на активного пользователя в&nbsp;день <span style="opacity:.85">(наша гипотеза, требует проверки на&nbsp;метриках)</span>. Плотный день с&nbsp;6&nbsp;спринтами даёт верх диапазона.</p>
+      </div>
+      <div class="card card-sm card-mustard rv" style="--d:.5s">
+        <p class="txt txt-dense"><b>🎯 Удержание</b> — на&nbsp;геймификации: уровни со&nbsp;сползанием и&nbsp;стрик дают причину открыть Tomatoro завтра.</p>
+      </div>
+    </div>
+    <div class="grow">
+      <!-- ▼ МЕСТО ДЛЯ КАРТИНКИ №13: скриншот бэклога задач и структуры дня -->
+      <div class="img-slot rv has-img" style="style="--d:.3s;flex:1""><img class="shot" src="img/tasks.png" alt="Скриншот Tomatoro"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ СЛАЙД 11 · ЭКОНОМИКА И ТАРИФЫ ═══════════════ -->
+<section class="slide" id="s11">
+  <div class="slide-head">
+    <div class="kicker rv"><span class="k-ic">💳</span>Таймер и логика Помодоро бесплатны навсегда. Плата только за ИИ-напарника</div>
+    <h2 class="slide-title rv" style="--d:.08s">Экономика <span class="hl">и тарифы</span></h2>
+  </div>
+  <div class="cols cols-62" style="">
+    <div class="grow">
+      <div class="card card-sm rv" style="--d:.15s;position:relative">
+        <span class="lbl lbl-leaf">🆓 Базовый</span>
+        <div class="price" style="margin-top:10px"><span class="p-val" style="color:var(--leaf)">0 ₽</span><span class="p-per">навсегда</span></div>
+        <p class="txt txt-dense" style="margin-top:10px">Бесплатно и&nbsp;навсегда — полный метод Помодоро: таймер с&nbsp;настраиваемой длиной спринтов, задачи дня, контроль 3&nbsp;рабочих вкладок, напоминание при&nbsp;отвлечении, статистика. Без&nbsp;ограничений по&nbsp;времени.</p>
+      </div>
+      <div class="card card-sm card-tomato rv" style="--d:.23s;position:relative">
+        <span style="position:absolute;top:-13px;right:18px" class="lbl lbl-must">⭐ ИИ-напарник</span>
+        <span class="lbl" style="background:var(--white)">🍅 Стандартный</span>
+        <div class="price" style="margin-top:10px"><span class="p-val">300 ₽</span><span class="p-per">в месяц</span></div>
+        <p class="txt txt-dense" style="margin-top:10px">Тот же таймер с&nbsp;логикой Помодоро, но&nbsp;также ИИ-напарник:</p>
+        <ul class="check-list" style="margin-top:10px">
+          <li><span class="mark">✓</span><span class="txt txt-dense">замечает уход и&nbsp;сам окликает уведомлением;</span></li>
+          <li><span class="mark">✓</span><span class="txt txt-dense">имеет эскалацию эмоций 4/8/12&nbsp;минут;</span></li>
+          <li><span class="mark">✓</span><span class="txt txt-dense">голос — SaluteSpeech (синтез речи Сбера);</span></li>
+          <li><span class="mark">✓</span><span class="txt txt-dense">имеет память-паттерны и&nbsp;даёт персональные советы;</span></li>
+          <li><span class="mark">✓</span><span class="txt txt-dense">аналитика с&nbsp;трендом и&nbsp;геймификацией: уровни, внутренняя валюта, стрики серий.</span></li>
+        </ul>
+      </div>
+      <div class="card card-sm card-mustard rv" style="--d:.31s">
+        <p class="txt txt-dense"><b>Оплата:</b> рублями (ЮKassa) или заслуженными помидорками. Черновая цена на&nbsp;MVP: <b class="mono">300&nbsp;₽/мес</b> или <b class="mono">3000&nbsp;Помидорок</b>.</p>
+      </div>
+    </div>
+    <div class="grow">
+      <!-- ▼ МЕСТО ДЛЯ КАРТИНКИ №14: скриншот экрана тарифов -->
+      <div class="img-slot rv has-img" style="style="--d:.3s;flex:1""><img class="shot" src="img/tariffs.png" alt="Скриншот Tomatoro"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ СЛАЙД 12 · АУДИТОРИЯ ═══════════════ -->
+<section class="slide" id="s12">
+  <div class="slide-head">
+    <div class="kicker rv"><span class="k-ic">👥</span>7–11 млн человек в РФ работают из дома</div>
+    <h2 class="slide-title rv" style="--d:.08s">Кому нужен Продукт <span class="hl">и сколько таких людей</span></h2>
+  </div>
+  <div class="cols cols-58" style="">
+    <div class="grow">
+      <p class="lead rv" style="--d:.15s;font-size:16.5px">Приоритетная аудитория — люди, которые работают из&nbsp;дома:</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="card card-sm rv" style="--d:.22s;display:flex;gap:12px;align-items:center;padding:12px 14px">
+          <span style="font-size:24px">💼</span><span class="txt txt-dense"><b>Фрилансеры и&nbsp;самозанятые</b> — сами себе начальники</span>
+        </div>
+        <div class="card card-sm rv" style="--d:.27s;display:flex;gap:12px;align-items:center;padding:12px 14px">
+          <span style="font-size:24px">💻</span><span class="txt txt-dense"><b>Удалённые сотрудники</b> (IT, дизайн, маркетинг, поддержка и&nbsp;др.)</span>
+        </div>
+        <div class="card card-sm rv" style="--d:.32s;display:flex;gap:12px;align-items:center;padding:12px 14px">
+          <span style="font-size:24px">🏢</span><span class="txt txt-dense"><b>Гибридный режим</b> — в&nbsp;офисе держится нормально, дома режим рассыпается</span>
+        </div>
+        <div class="card card-sm rv" style="--d:.37s;display:flex;gap:12px;align-items:center;padding:12px 14px">
+          <span style="font-size:24px">🎓</span><span class="txt txt-dense"><b>Студенты</b></span>
+        </div>
+        <div class="card card-sm rv" style="--d:.42s;display:flex;gap:12px;align-items:center;padding:12px 14px">
+          <span style="font-size:24px">🚀</span><span class="txt txt-dense"><b>Предприниматели</b></span>
+        </div>
+        <div class="card card-sm rv" style="--d:.47s;display:flex;gap:12px;align-items:center;padding:12px 14px">
+          <span style="font-size:24px">✍️</span><span class="txt txt-dense"><b>Работники умственного труда</b></span>
+        </div>
+      </div>
+      <div class="card card-sm card-lav rv" style="--d:.52s">
+        <p class="txt txt-dense">Работники умственного труда — писатели, журналисты, блогеры, учёные, психологи, художники, музыканты, то&nbsp;есть люди с&nbsp;более свободным графиком, которые имеют больше независимости в&nbsp;работе без&nbsp;формального статуса фрилансера или самозанятости.</p>
+      </div>
+      <div class="card card-sm rv" style="--d:.57s">
+        <p class="txt txt-dense"><b>Объём:</b> ~74&nbsp;млн занятых в&nbsp;РФ <span class="mono" style="font-size:11px;color:var(--ink-soft)"><a href="https://rosstat.gov.ru/folder/11110" target="_blank" style="color:inherit;text-decoration:underline">Росстат</a></span>; 10–15% регулярно на&nbsp;удалёнке или гибриде <span class="mono" style="font-size:11px;color:var(--ink-soft)"><a href="https://hh.ru/article/27234" target="_blank" style="color:inherit;text-decoration:underline">опросы hh.ru/РАНХиГС</a>, оценка</span> = 7–11&nbsp;млн. Самозанятых — 12+&nbsp;млн <span class="mono" style="font-size:11px;color:var(--ink-soft)"><a href="https://npd.nalog.ru/stats.html" target="_blank" style="color:inherit;text-decoration:underline">ФНС, оценка</a></span>. Вторичные сегменты: студенты (~5&nbsp;млн), люди с&nbsp;чертами СДВГ.</p>
+      </div>
+    </div>
+    <div class="grow">
+      <div class="card card-tomato card-pad-lg rv" style="--d:.25s;flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px">
+        <div class="stat-big" style="font-size:66px">7–11 <span style="font-size:30px">млн</span></div>
+        <div style="height:3px;background:rgba(255,255,255,.35);border-radius:3px"></div>
+        <p class="stat-cap" style="font-weight:600">Аудитория — те, кто работает без коллег рядом: это 7–11&nbsp;млн человек в&nbsp;России.</p>
+        <p class="stat-cap">И эти люди уже платят за&nbsp;попытку сфокусироваться на&nbsp;работе — коворкингам в&nbsp;<b>10–20 раз дороже</b> нашей подписки.</p>
+      </div>
+      <div class="card card-sm card-leaf rv" style="--d:.4s">
+        <p class="txt txt-dense"><b>💸 За фокус они уже платят:</b> коворкингам, коучингу, Focusmate&nbsp;Plus и&nbsp;другим тайм-трекерам.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ СЛАЙД 13 · КОНКУРЕНТЫ ═══════════════ -->
+<section class="slide" id="s13">
+  <div class="slide-head">
+    <div class="kicker rv"><span class="k-ic">🥊</span>Простые таймеры не замечают отвлечение. Коворкинги — в 10–20 раз дороже нашего сервиса. Ниша в России пуста</div>
+    <h2 class="slide-title rv" style="--d:.08s">Конкуренты: прямые молчат, <span class="hl">косвенные дороги</span></h2>
+  </div>
+  <div class="cols cols-62" style="">
+    <div class="grow">
+      <span class="lbl lbl-tomato rv" style="--d:.15s">✕ Прямые конкуренты</span>
+      <div class="grow" style="gap:10px">
+        <div class="card card-sm rv" style="--d:.2s;display:flex;gap:12px;padding:10px 16px">
+          <span class="mark mark-x">✕</span>
+          <p class="txt txt-dense"><b>Forest</b> — таймер-игра: ушёл из приложения — «дерево умерло». Построен на идее наказания, что провоцирует стресс у&nbsp;пользователей, отчего с&nbsp;него большой отток.</p>
+        </div>
+        <div class="card card-sm rv" style="--d:.26s;display:flex;gap:12px;padding:10px 16px">
+          <span class="mark mark-x">✕</span>
+          <p class="txt txt-dense"><b>Focusmate</b> — сайт видеозвонков «работаю рядом» с&nbsp;незнакомцем: чужой человек следит через камеру, нужно подстраиваться под чужое расписание.</p>
+        </div>
+        <div class="card card-sm rv" style="--d:.32s;display:flex;gap:12px;padding:10px 16px">
+          <span class="mark mark-x">✕</span>
+          <p class="txt txt-dense"><b>Focus To-Do, Pomofocus</b> — есть таймер и&nbsp;статистика, но&nbsp;требует от&nbsp;пользователя дисциплины для управления приложением, которой у&nbsp;того нет.</p>
+        </div>
+        <div class="grow" style="gap:10px;display:grid;grid-template-columns:1fr 1fr">
+          <div class="card card-sm rv" style="--d:.38s;display:flex;gap:12px;padding:10px 14px">
+            <span class="mark mark-x" style="width:22px;height:22px;font-size:11px">✕</span>
+            <p class="txt txt-dense" style="font-size:13px"><b>Session</b> — только Apple</p>
+          </div>
+          <div class="card card-sm rv" style="--d:.42s;display:flex;gap:12px;padding:10px 14px">
+            <span class="mark mark-x" style="width:22px;height:22px;font-size:11px">✕</span>
+            <p class="txt txt-dense" style="font-size:13px"><b>RuStore-таймеры</b> — без ИИ, без памяти и адаптации под пользователя</p>
+          </div>
+        </div>
+      </div>
+      <span class="lbl lbl-must rv" style="--d:.47s">☕ Косвенные — коворкинги</span>
+      <div class="card card-sm card-mustard rv" style="--d:.5s">
+        <p class="txt txt-dense">Физические коворкинги — у&nbsp;них рабочее место арендуют ради эффекта «вокруг работают люди». Итог: шум в&nbsp;офисе, траты времени на&nbsp;дорогу, нестабильный интернет — и&nbsp;цена в&nbsp;10–20&nbsp;раз выше подписки за&nbsp;наш сервис. <b>Открытые ИИ-напарники (Anchor и&nbsp;др.)</b> — для гиков-энтузиастов: свой сервер, свои ключи, без&nbsp;техподдержки.</p>
+      </div>
+    </div>
+    <div class="grow">
+      <div class="card card-basil card-pad-lg rv" style="--d:.3s;flex:1;display:flex;flex-direction:column;justify-content:center;gap:16px">
+        <div style="font-size:34px">🏆</div>
+        <p class="txt" style="color:var(--cream);font-size:14.5px;line-height:1.55">Прямые конкуренты либо <b style="color:var(--mustard)">молча тикают</b>, ожидая, что неспособный взять себя в&nbsp;руки пользователь возьмёт себя в&nbsp;руки, либо <b style="color:var(--tomato-light)">наказывают и&nbsp;устраивают скандалы</b>. Косвенные конкуренты — это коворкинги, продают тот&nbsp;же эффект «кто-то рядом», но&nbsp;с&nbsp;шумом на&nbsp;рабочем месте, тратами на&nbsp;дорогу и&nbsp;в&nbsp;10–20&nbsp;раз дороже.</p>
+      </div>
+      <div class="card card-sm card-leaf rv" style="--d:.42s">
+        <p class="txt txt-dense" style="font-weight:700;font-size:15px">✓ Ниша русскоязычного Помодоро с&nbsp;ИИ-напарником в&nbsp;РФ свободна.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ СЛАЙД 14 · КАК ЭТО УСТРОЕНО ВНУТРИ ═══════════════ -->
+<section class="slide" id="s14">
+  <div class="slide-head">
+    <div class="kicker rv"><span class="k-ic">🛡</span>Русский стек. Приватность — на уровне архитектуры. Дружелюбная атмосфера и продуманный UX</div>
+    <h2 class="slide-title rv" style="--d:.08s">Как это <span class="hl">устроено внутри</span></h2>
+  </div>
+  <div class="grow" style="justify-content:space-between">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px">
+      <div class="card rv" style="--d:.15s">
+        <span class="lbl">🖥 Клиенты</span>
+        <p class="txt txt-dense" style="margin-top:12px">Веб-кабинет (<b>Next.js</b>) + расширение браузера (<b>Manifest&nbsp;V3, WXT</b>). Расширение сравнивает домен локально: на&nbsp;сервер уходит только факт ухода — без&nbsp;URL. <b>Ни экрана, ни&nbsp;камеры, ни&nbsp;чтения страниц.</b></p>
+      </div>
+      <div class="card rv" style="--d:.22s">
+        <span class="lbl">⚙️ Бэкенд</span>
+        <p class="txt txt-dense" style="margin-top:12px"><b>FastAPI</b>, машина состояний спринта/помодоро/дня, <b>PostgreSQL</b> (Supabase, RLS). Генерация ИИ — через очередь <b>Celery&nbsp;+&nbsp;Redis</b>: не&nbsp;блокирует других пользователей.</p>
+      </div>
+      <div class="card rv" style="--d:.29s">
+        <span class="lbl lbl-tomato">🤖 ИИ</span>
+        <p class="txt txt-dense" style="margin-top:12px">Озвучка — <b>SaluteSpeech</b> (Сбер), аудио стримится и&nbsp;не&nbsp;хранится. Уведомления — <b>Web&nbsp;Push</b>. Платежи — <b>ЮKassa</b>. Серверы в&nbsp;РФ.</p>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px">
+          <span class="chip chip-t">GigaChat</span><span class="mono" style="font-weight:800">→</span>
+          <span class="chip chip-m">YandexGPT</span><span class="mono" style="font-weight:800">→</span>
+          <span class="chip chip-g">словарь</span>
+        </div>
+        <p class="txt txt-dense" style="margin-top:10px;font-size:13px;color:var(--ink-soft)">GigaChat (основная, токены организаторов) → YandexGPT (резерв) → статический словарь (fallback за 5 сек)</p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:18px">
+      <div class="card card-sm card-leaf rv" style="--d:.4s;display:flex;gap:16px;align-items:center;padding:18px 22px">
+        <span style="font-size:34px;flex-shrink:0">🔒</span>
+        <p class="txt txt-dense"><b>152-ФЗ:</b> экспорт данных и&nbsp;удаление аккаунта встроены в&nbsp;продукт.</p>
+      </div>
+      <div class="card card-sm card-lav rv" style="--d:.47s;display:flex;gap:16px;align-items:center;padding:18px 22px">
+        <span style="font-size:34px;flex-shrink:0">📈</span>
+        <p class="txt txt-dense"><b>Масштабирование:</b> до <b class="mono">10&nbsp;000+&nbsp;DAU</b> горизонтально (Redis&nbsp;Pub/Sub).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ СЛАЙД 15 · ПЛАН ═══════════════ -->
+<section class="slide" id="s15">
+  <div class="slide-head">
+    <div class="kicker rv"><span class="k-ic">🚀</span>12 недель: MVP → 30 интервью → 70 тестировщиков → 1000 DAU</div>
+    <h2 class="slide-title rv" style="--d:.08s">План</h2>
+  </div>
+  <div class="cols cols-62" style="">
+    <div class="grow" style="gap:12px">
+      <div class="tl">
+        <div class="tl-item rv" style="--d:.15s">
+          <span class="tl-week">Недели 1–2</span>
+          <p class="tl-body"><b>30 CustDev-интервью</b>; каркас веб-кабинета (авторизация, таймер).</p>
+        </div>
+        <div class="tl-item rv" style="--d:.21s">
+          <span class="tl-week">Недели 3–4</span>
+          <p class="tl-body">Расширение с&nbsp;детекцией ухода, ИИ-вмешательство (GigaChat&nbsp;+&nbsp;SaluteSpeech), Web&nbsp;Push, биллинг → <b>MVP, закрытая бета</b>.</p>
+        </div>
+        <div class="tl-item rv" style="--d:.27s">
+          <span class="tl-week">Недели 5–7</span>
+          <p class="tl-body">Геймификация, итоги дня, память-лайт; админка с&nbsp;промокодами для тестировщиков.</p>
+        </div>
+        <div class="tl-item rv" style="--d:.33s">
+          <span class="tl-week">Недели 8–10</span>
+          <p class="tl-body">Публичный запуск в&nbsp;открытом контуре; GTM: Telegram-чаты удалёнщиков, VC.ru, Habr, VK; <b>70+&nbsp;тестировщиков</b>.</p>
+        </div>
+        <div class="tl-item rv" style="--d:.39s">
+          <span class="tl-week">Недели 11–12</span>
+          <p class="tl-body">Итерации по&nbsp;метрикам, рост к&nbsp;<b>1000&nbsp;DAU</b>.</p>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="card card-sm card-leaf rv" style="--d:.46s">
+          <span class="lbl lbl-leaf" style="font-size:10px">🤖 LLM (GigaChat) делает</span>
+          <p class="txt txt-dense" style="margin-top:10px">Реплики возвращения с&nbsp;эскалацией тона, черновик утреннего плана, итоги дня, поздравления за&nbsp;идеальный день.</p>
+        </div>
+        <div class="card card-sm card-mustard rv" style="--d:.52s">
+          <span class="lbl" style="font-size:10px">⛔ Не делает</span>
+          <p class="txt txt-dense" style="margin-top:10px">Паттерны считает бэкенд (SQL); при&nbsp;сбое — статические фразы, сессия не&nbsp;прерывается.</p>
+        </div>
+      </div>
+    </div>
+    <div class="grow">
+      <div class="card card-tomato card-pad-lg rv" style="--d:.3s;flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px">
+        <span class="lbl lbl-must" style="width:fit-content">⚡ К MVP — за 4 недели</span>
+        <p style="font-size:15.5px;line-height:1.55;font-weight:500">Системный анализ доведён до&nbsp;ER-модели, API-контрактов и&nbsp;промптов — <b>строим по&nbsp;готовой спецификации</b>.</p>
+        <p style="font-size:15.5px;line-height:1.55;font-weight:500">К&nbsp;десятой неделе — <b>70&nbsp;тестировщиков</b> и&nbsp;открытый контур, как требует программа.</p>
+        <p style="font-size:15.5px;line-height:1.55;font-weight:500">Дальше — метрики и&nbsp;рост к&nbsp;<b class="mono">1000&nbsp;DAU</b>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ СЛАЙД 16 · КОНТАКТЫ ═══════════════ -->
+<section class="slide slide-dark" id="s16">
+  <div style="position:absolute;left:64px;top:56px;display:flex;align-items:center;gap:16px;z-index:2">
+    <div style="width:54px;height:54px;border-radius:16px;background:var(--tomato);border:var(--b3);box-shadow:var(--sh4);display:flex;align-items:center;justify-content:center;font-size:28px;transform:rotate(-4deg)">🍅</div>
+    <div>
+      <div style="font-family:'Unbounded';font-weight:900;font-size:22px;color:var(--cream)">Томаторо</div>
+      <div style="font-size:13px;color:var(--tomato-light);font-weight:600">Напарник по фокусу</div>
+    </div>
+  </div>
+  <div style="position:absolute;left:64px;top:150px;right:64px;bottom:110px;display:grid;grid-template-columns:1.2fr 1fr;gap:40px;align-items:center;z-index:2">
+    <div>
+      <h2 class="rv" style="font-family:'Unbounded';font-weight:900;font-size:64px;color:var(--cream);line-height:1.05;letter-spacing:-1px">Контакты</h2>
+      <p class="rv" style="--d:.12s;margin-top:18px;font-size:17px;color:var(--tomato-light);max-width:420px;line-height:1.5;font-weight:500">Обсудим продукт, метрики и&nbsp;участие в&nbsp;программе — пишите или звоните.</p>
+      <div class="rv" style="--d:.2s;margin-top:28px;display:flex;gap:12px">
+        <span class="chip" style="background:var(--basil);color:var(--mustard);border-color:var(--cream);box-shadow:3px 3px 0 var(--tomato)">2026</span>
+        <span class="chip" style="background:var(--basil);color:var(--cream);border-color:var(--cream);box-shadow:3px 3px 0 var(--tomato)">SaaS · AI · Помодоро</span>
+      </div>
+    </div>
+    <div class="card rv" style="--d:.25s;background:var(--white);padding:30px 32px">
+      <div style="font-family:'Unbounded';font-weight:800;font-size:21px;line-height:1.25">Ишмуратов<br>Михаил Алексеевич</div>
+      <div style="height:3px;background:var(--tomato);border-radius:3px;margin:20px 0;width:64px"></div>
+      <div class="grow" style="gap:14px">
+        <a href="tel:+79170309936" style="display:flex;align-items:center;gap:14px;text-decoration:none;color:var(--basil)">
+          <span style="width:40px;height:40px;flex-shrink:0;border-radius:12px;background:var(--mustard);border:var(--b2);box-shadow:2px 2px 0 var(--basil);display:flex;align-items:center;justify-content:center;font-size:18px">📞</span>
+          <span><span style="display:block;font-size:11px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.06em">Телефон</span><b class="mono" style="font-size:15.5px">+7 917 030-99-36</b></span>
+        </a>
+        <a href="mailto:ishmuratov.ma@yandex.ru" style="display:flex;align-items:center;gap:14px;text-decoration:none;color:var(--basil)">
+          <span style="width:40px;height:40px;flex-shrink:0;border-radius:12px;background:var(--leaf-light);border:var(--b2);box-shadow:2px 2px 0 var(--basil);display:flex;align-items:center;justify-content:center;font-size:18px">✉️</span>
+          <span><span style="display:block;font-size:11px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.06em">Почта</span><b class="mono" style="font-size:15.5px">ishmuratov.ma@yandex.ru</b></span>
+        </a>
+        <a href="https://tomatoro.ru" target="_blank" style="display:flex;align-items:center;gap:14px;text-decoration:none;color:var(--basil)">
+          <span style="width:40px;height:40px;flex-shrink:0;border-radius:12px;background:var(--tomato-light);border:var(--b2);box-shadow:2px 2px 0 var(--basil);display:flex;align-items:center;justify-content:center;font-size:18px">🌐</span>
+          <span><span style="display:block;font-size:11px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.06em">Сайт</span><b class="mono" style="font-size:15.5px">tomatoro.ru</b></span>
+        </a>
+      </div>
+    </div>
+  </div>
+  <div style="position:absolute;right:40px;bottom:20px;font-size:130px;opacity:.85;transform:rotate(-8deg);z-index:1;filter:drop-shadow(8px 8px 0 rgba(233,79,55,.3));animation:tomFloat 5.5s ease-in-out infinite">🍅</div>
+</section>
+
+</div><!-- /stage -->
+
+<!-- Интерфейс навигации -->
+<div id="ui">
+  <div id="progress"><div class="bar"></div></div>
+  <div id="hint">Листайте: <b>колесо мыши</b> · <b>стрелки ← →</b> · <b>кнопки внизу</b></div>
+  <div id="hud">
+    <div id="counter"><span class="cur">01</span> / 16</div>
+    <div id="dots"></div>
+    <div id="nav-btns">
+      <button class="nav-btn" id="fs-btn" title="Во весь экран (F)" aria-label="Во весь экран">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" stroke="#1E1B18"/></svg>
+      </button>
+      <button class="nav-btn" id="prev-btn" title="Назад (←)" aria-label="Предыдущий слайд">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke="#1E1B18"/></svg>
+      </button>
+      <button class="nav-btn main" id="next-btn" title="Вперёд (→)" aria-label="Следующий слайд">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M9 5l7 7-7 7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke="#1E1B18"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var slides=[].slice.call(document.querySelectorAll('.slide'));
+  var N=slides.length,cur=0,lock=false;
+  var bar=document.querySelector('#progress .bar');
+  var counter=document.querySelector('#counter .cur');
+  var dotsBox=document.getElementById('dots');
+  var hint=document.getElementById('hint');
+
+  /* точки навигации */
+  slides.forEach(function(_,i){
+    var d=document.createElement('button');
+    d.className='dot';d.title='Слайд '+(i+1);d.setAttribute('aria-label','Слайд '+(i+1));
+    d.addEventListener('click',function(){go(i);});
+    dotsBox.appendChild(d);
+  });
+  var dots=[].slice.call(document.querySelectorAll('.dot'));
+
+  function go(n){
+    n=Math.max(0,Math.min(N-1,n));
+    if(n===cur&&slides[cur].classList.contains('active'))return;
+    slides.forEach(function(s,i){
+      s.classList.toggle('active',i===n);
+      s.classList.toggle('passed',i<n);
+    });
+    dots.forEach(function(d,i){d.classList.toggle('on',i===n);});
+    cur=n;
+    bar.style.width=((n+1)/N*100)+'%';
+    counter.textContent=(n<9?'0':'')+(n+1);
+    dismissHint();
+    try{history.replaceState(null,'','#'+(n+1));}catch(e){}
+  }
+  function next(){go(cur+1);}
+  function prev(){go(cur-1);}
+  function dismissHint(){if(hint)hint.classList.add('off');}
+
+  /* ── колесо мыши ── */
+  var wheelLock=false;
+  window.addEventListener('wheel',function(e){
+    if(wheelLock)return;
+    var d=e.deltaY||e.deltaX;
+    if(Math.abs(d)<18)return;
+    wheelLock=true;setTimeout(function(){wheelLock=false;},850);
+    d>0?next():prev();
+  },{passive:true});
+
+  /* ── клавиатура ── */
+  window.addEventListener('keydown',function(e){
+    if(e.metaKey||e.ctrlKey||e.altKey)return;
+    switch(e.key){
+      case 'ArrowRight':case 'ArrowDown':case 'PageDown':case ' ':case 'Enter':
+        e.preventDefault();next();break;
+      case 'ArrowLeft':case 'ArrowUp':case 'PageUp':
+        e.preventDefault();prev();break;
+      case 'Home':e.preventDefault();go(0);break;
+      case 'End':e.preventDefault();go(N-1);break;
+      case 'f':case 'F':case 'а':case 'А':toggleFS();break;
+      case 'Escape':dismissHint();break;
+    }
+  });
+
+  /* ── кнопки ── */
+  document.getElementById('next-btn').addEventListener('click',next);
+  document.getElementById('prev-btn').addEventListener('click',prev);
+  document.getElementById('fs-btn').addEventListener('click',toggleFS);
+  function toggleFS(){
+    if(!document.fullscreenElement){
+      (document.documentElement.requestFullscreen||function(){}).call(document.documentElement);
+    }else if(document.exitFullscreen){document.exitFullscreen();}
+  }
+
+  /* ── свайп на тач-экранах ── */
+  var tx=0,ty=0;
+  window.addEventListener('touchstart',function(e){
+    tx=e.touches[0].clientX;ty=e.touches[0].clientY;
+  },{passive:true});
+  window.addEventListener('touchend',function(e){
+    var dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;
+    if(Math.max(Math.abs(dx),Math.abs(dy))<46)return;
+    if(Math.abs(dx)>Math.abs(dy)){dx<0?next():prev();}
+    else{dy<0?next():prev();}
+  },{passive:true});
+
+  /* ── масштаб сцены под окно ── */
+  var stage=document.getElementById('stage');
+  function fit(){
+    var s=Math.min(window.innerWidth/1440,window.innerHeight/810)*.965;
+    stage.style.transform='translate(-50%,-50%) scale('+s+')';
+  }
+  window.addEventListener('resize',fit);fit();
+
+  /* ── летящие помидорки ── */
+  var seeds=document.getElementById('seeds');
+  ['🍅','🍅','🌱','🍅','🌿','🍅'].forEach(function(em,i){
+    var s=document.createElement('span');
+    s.className='seed';s.textContent=em;
+    s.style.left=(6+i*15.5)+'%';
+    s.style.fontSize=(16+(i%3)*7)+'px';
+    s.style.animationDuration=(14+i*3.2)+'s';
+    s.style.animationDelay=(-i*4.5)+'s';
+    seeds.appendChild(s);
+  });
+
+  /* ── старт: deep-link #номер ── */
+  var start=parseInt((location.hash||'').replace('#',''),10);
+  go(isNaN(start)?0:Math.max(0,Math.min(N-1,start-1)));
+  setTimeout(function(){if(!hint.classList.contains('off'))dismissHint();},9000);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+<link rel="icon" type="image/png" sizes="64x64" href="img/favicon.png">
+<link rel="apple-touch-icon" href="img/favicon.png">
+    <title>Томаторо - демо-макет</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;700&family=JetBrains+Mono:wght@500;700&family=Unbounded:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cream: #FFF9F0; --tomato: #E94F37; --tomato-dark: #C43D2B;
+            --tomato-light: #F9C4B8; --leaf: #4C9F70; --leaf-light: #CDEBD8;
+            --basil: #1E1B18; --mustard: #F5B841; --lavender-soft: #D9D4F1; --white: #FFFFFF;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Golos Text', sans-serif; background-color: var(--cream); color: var(--basil); overflow-x: hidden; min-height: 100vh; }
+        h1, h2, h3 { font-family: 'Unbounded', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+
+        .bg-pattern { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; background-image: radial-gradient(var(--tomato-light) 2px, transparent 2px); background-size: 30px 30px; opacity: 0.4; }
+        .floating-seed { position: fixed; font-size: 24px; animation: floatUp 10s infinite linear; z-index: -1; opacity: 0.6; }
+        @keyframes floatUp { 0% { transform: translateY(100vh) rotate(0deg); opacity: 0; } 10% { opacity: 0.6; } 90% { opacity: 0.6; } 100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; } }
+
+        .btn-brutal { background: var(--tomato); color: var(--white); border: 3px solid var(--basil); border-radius: 12px; padding: 12px 24px; font-family: 'Unbounded', sans-serif; font-weight: 600; cursor: pointer; box-shadow: 4px 4px 0 var(--basil); transition: all 0.1s; user-select: none; }
+        .btn-brutal:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--basil); }
+        .btn-brutal:active { transform: translate(4px, 4px); box-shadow: 0px 0px 0 var(--basil); }
+        .btn-secondary { background: var(--white); color: var(--basil); }
+        .btn-sm { padding: 8px 16px; font-size: 14px; }
+        .btn-mustard { background: var(--mustard); color: var(--basil); }
+        .btn-leaf { background: var(--leaf); color: var(--white); }
+        .btn-danger { background: var(--tomato-dark); color: var(--white); width: 100%; }
+
+        .app-layout { display: grid; grid-template-columns: 240px 1fr 340px; grid-template-rows: auto 1fr; gap: 24px; padding: 40px; max-width: 1200px; margin: 0 auto; }
+        .dash-sidebar { grid-row: 1 / 3; }
+
+        .top-timeline { grid-column: 2 / 4; background: var(--white); border: 3px solid var(--basil); border-radius: 20px; box-shadow: 6px 6px 0 var(--basil); padding: 20px; }
+        .tl-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .tl-header h3 { font-size: 18px; }
+        .tl-track { display: flex; align-items: center; gap: 4px; padding: 10px; background: var(--cream); border: 2px solid var(--basil); border-radius: 12px; overflow-x: auto; cursor: grab; }
+        .tl-track:active { cursor: grabbing; }
+        .pomodoro-group { display: flex; align-items: center; gap: 4px; padding: 4px; border: 2px dashed var(--mustard); border-radius: 12px; background: rgba(245, 184, 65, 0.1); flex-shrink: 0; }
+        .add-sprint-btn { width: 24px; height: 24px; border: 2px dashed var(--basil); border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: var(--white); color: var(--basil); font-weight: 700; opacity: 0.5; transition: 0.2s; }
+        .add-sprint-btn:hover { opacity: 1; background: var(--tomato); color: var(--white); border-style: solid; }
+        .segment { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--basil); display: flex; align-items: center; justify-content: center; font-size: 14px; background: var(--white); cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
+        .segment:hover { transform: scale(1.1); }
+        .seg-done { background: var(--leaf); color: var(--white); }
+        .seg-break-done { background: var(--mustard); color: var(--basil); border-radius: 4px; transform: scale(0.8); cursor: default; }
+        .seg-current { background: var(--tomato); color: var(--white); animation: pulse-tomato 1.5s infinite; box-shadow: 0 0 0 4px rgba(233, 79, 55, 0.2); }
+        .seg-upcoming { background: var(--white); border-style: dashed; color: var(--basil); opacity: 0.6; }
+        .seg-long-break { width: 50px; border-radius: 8px; }
+        .seg-divider { width: 2px; height: 40px; background: var(--basil); opacity: 0.3; margin: 0 8px; flex-shrink: 0; }
+        .pomodoro-add { display: flex; align-items: center; justify-content: center; padding: 0 16px; border: 2px dashed var(--basil); border-radius: 12px; background: var(--white); cursor: pointer; font-size: 12px; font-weight: 700; opacity: 0.6; transition: 0.2s; flex-shrink: 0; height: 50px; }
+        .pomodoro-add:hover { opacity: 1; background: var(--tomato); color: var(--white); box-shadow: 4px 4px 0 var(--basil); transform: translate(-2px,-2px); }
+        @keyframes pulse-tomato { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        .tl-legend { display: flex; gap: 16px; font-size: 12px; color: #555; justify-content: center; margin-top: 12px; }
+
+        .dash-sidebar { background: var(--white); border: 3px solid var(--basil); border-radius: 20px; box-shadow: 6px 6px 0 var(--basil); padding: 24px 16px; display: flex; flex-direction: column; gap: 8px; height: fit-content; }
+        .sub-badge { background: var(--lavender-soft); border: 2px solid var(--basil); border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; font-weight: 700; font-size: 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; box-shadow: 3px 3px 0 var(--basil); transition: all 0.1s; }
+        .sub-badge:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--basil); }
+        .sub-badge:active { transform: translate(0,0); box-shadow: 1px 1px 0 var(--basil); }
+        .sub-arrow { font-size: 12px; opacity: 0.6; }
+
+        .nav-item { display: flex; align-items: center; gap: 12px; font-weight: 600; padding: 12px; border-radius: 12px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s ease; }
+        .nav-item:hover { background: var(--cream); border-color: var(--basil); }
+        .nav-item.active { background: var(--tomato); color: var(--white); border-color: var(--basil); box-shadow: 3px 3px 0 var(--basil); }
+        .settings-box { margin-top: 10px; background: var(--cream); border: 2px solid var(--basil); border-radius: 12px; padding: 12px; }
+        .sb-title { font-size: 12px; font-weight: 700; text-align: left; margin-bottom: 8px; opacity: 0.7; }
+        .toggle-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+        .toggle-switch { width: 36px; height: 20px; background: var(--white); border: 2px solid var(--basil); border-radius: 12px; position: relative; cursor: pointer; }
+        .toggle-knob { width: 12px; height: 12px; background: var(--basil); border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: 0.2s; }
+        .toggle-switch.on { background: var(--leaf); }
+        .toggle-switch.on .toggle-knob { left: 18px; background: var(--white); }
+        .profile-card { margin-top: 16px; background: var(--cream); border: 3px solid var(--basil); border-radius: 16px; padding: 16px; box-shadow: 4px 4px 0 var(--basil); }
+        .pc-label { font-size: 12px; color: #666; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+        .pc-level-btn { background: var(--mustard); border: 2px solid var(--basil); border-radius: 6px; padding: 2px 8px; font-size: 10px; cursor: pointer; font-weight: 700; box-shadow: 2px 2px 0 var(--basil); transition: all 0.1s; }
+        .pc-level-btn:hover { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 var(--basil); }
+        .pc-current-level { display: flex; align-items: center; gap: 8px; font-family: 'Unbounded'; font-weight: 700; font-size: 16px; margin: 4px 0 8px 0; }
+        .pc-next-level { font-size: 13px; font-weight: 500; margin-bottom: 8px; }
+        .progress-bar { height: 12px; background: var(--white); border: 2px solid var(--basil); border-radius: 6px; overflow: hidden; }
+        .progress-fill { height: 100%; width: 75%; background: var(--mustard); transition: width 0.5s ease; }
+        .pc-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 12px; font-weight: 600; }
+        .pc-link { color: var(--tomato); text-decoration: none; border-bottom: 1px solid var(--tomato); cursor: pointer; }
+        .pc-coins { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--basil); display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 13px; }
+        .pc-coins-text { flex: 1; text-align: left; }
+
+        .dash-main { grid-column: 2; grid-row: 2; background: var(--white); border: 3px solid var(--basil); border-radius: 24px; box-shadow: 8px 8px 0 var(--basil); padding: 24px; display: flex; flex-direction: column; gap: 24px; min-height: 500px; }
+        .view { display: none; flex-direction: column; gap: 24px; flex: 1; }
+        .view.active { display: flex; }
+        .section-title { font-family: 'Unbounded'; font-weight: 700; font-size: 14px; text-transform: uppercase; color: #444; display: flex; justify-content: space-between; width: 100%; align-items: center; }
+        .card-brutal { width: 100%; background: var(--cream); border: 2px solid var(--basil); border-radius: 16px; padding: 16px; box-shadow: 4px 4px 0 var(--basil); }
+        .tag { font-size: 12px; font-weight: 700; background: var(--basil); color: var(--white); padding: 6px 12px; border-radius: 8px; text-transform: uppercase; border: 2px solid var(--basil); box-shadow: 2px 2px 0 var(--basil); }
+        .tag.leaf { background: var(--leaf); color: var(--white); }
+
+        /* --- TODAY VIEW --- */
+        .timer-wrap { position: relative; width: 180px; height: 180px; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
+        .timer-circle { width: 100%; height: 100%; border: 4px solid var(--basil); border-radius: 50%; background: var(--white); box-shadow: 6px 6px 0 var(--basil); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .timer-circle.running { animation: pulse-timer 2s infinite ease-in-out; }
+        @keyframes pulse-timer { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+        .timer-text { font-family: 'JetBrains Mono', monospace; font-size: 32px; font-weight: 700; }
+        .goal-input { width: 100%; padding: 12px; border: 3px solid var(--basil); border-radius: 12px; font-family: 'Golos Text', sans-serif; font-size: 16px; text-align: center; box-shadow: 4px 4px 0 var(--basil); background: var(--white); }
+        .goal-input:focus { outline: none; border-color: var(--tomato); }
+        .restart-btn { position: absolute; top: 16px; right: 16px; width: 36px; height: 36px; background: var(--white); border: 2px solid var(--basil); border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; font-weight: 700; box-shadow: 3px 3px 0 var(--basil); transition: 0.1s; z-index: 10; color: var(--basil); }
+        .restart-btn:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--basil); background: var(--cream); }
+
+        /* --- TASKS VIEW --- */
+        .tasks-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; height: 100%; }
+        .task-list { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding-right: 8px; }
+        .task-item { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 12px 36px 12px 12px; background: var(--white); border: 2px solid var(--basil); border-radius: 8px; transition: all 0.2s; }
+        .task-item:hover { transform: translateX(4px); box-shadow: 2px 2px 0 var(--basil); }
+        .task-item.active { background: var(--tomato-light); border-width: 2px; }
+        .task-main { display: flex; align-items: center; gap: 10px; }
+        .status-btn { width: 24px; height: 24px; border: 2px solid var(--basil); border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; background: var(--white); flex-shrink: 0; transition: 0.2s; }
+        .status-btn:hover { transform: scale(1.1); }
+        .status-s-todo { background: var(--white); color: transparent; }
+        .status-s-done { background: var(--leaf); color: var(--white); border-color: var(--basil); }
+        .status-s-fail { background: var(--tomato); color: var(--white); border-color: var(--basil); }
+        .status-s-partial { background: var(--mustard); color: var(--basil); border-color: var(--basil); }
+        .task-text { flex: 1; font-size: 14px; font-weight: 500; cursor: text; line-height: 1.3; }
+        .task-text:focus { outline: 2px solid var(--mustard); background: var(--white); }
+        .task-item.done .task-text { text-decoration: line-through; opacity: 0.5; }
+        .task-meta { display: flex; align-items: center; margin-left: 34px; gap: 8px; }
+        .assign-btn { background: var(--cream); border: 2px solid var(--basil); border-radius: 6px; padding: 3px 8px; font-size: 11px; font-weight: 600; cursor: pointer; }
+        .assign-btn:hover { background: var(--mustard); }
+        .task-del-btn { position: absolute; top: 10px; right: 10px; width: 22px; height: 22px; border: 1px solid var(--tomato-light); border-radius: 4px; background: var(--white); color: var(--tomato-dark); display: flex; align-items: center; justify-content: center; font-size: 12px; opacity: 0; transition: 0.2s; cursor: pointer; }
+        .task-item:hover .task-del-btn { opacity: 1; }
+        .task-del-btn:hover { background: var(--tomato); color: var(--white); border-color: var(--basil); }
+        .add-task-row { display: flex; gap: 10px; margin-top: 24px; padding-top: 20px; border-top: 2px dashed var(--basil); }
+        .add-task-input { flex: 1; padding: 12px 16px; border: 2px solid var(--basil); border-radius: 8px; font-family: 'Golos Text', sans-serif; font-weight: 600; font-size: 14px; background: var(--cream); box-shadow: 2px 2px 0 var(--basil); transition: all 0.1s; }
+        .add-task-input::placeholder { color: var(--basil); opacity: 0.5; }
+        .add-task-input:focus { outline: none; border-color: var(--tomato); background: var(--white); transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--basil); }
+
+        .pomodoro-card { background: var(--white); border: 2px solid var(--basil); border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
+        .pc-head { background: var(--mustard); padding: 8px 12px; font-weight: 700; border-bottom: 2px solid var(--basil); display: flex; justify-content: space-between; align-items: center; }
+        .sprint-row { padding: 10px; border-bottom: 1px solid var(--basil); display: flex; align-items: center; gap: 8px; }
+        .sprint-row:last-child { border-bottom: none; }
+        .sprint-num { width: 24px; height: 24px; background: var(--cream); border: 1px solid var(--basil); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+        .sprint-task { flex: 1; font-size: 14px; font-weight: 500; }
+        .sprint-empty { flex: 1; font-size: 14px; color: #888; font-style: italic; }
+
+        /* --- TARIFFS VIEW --- */
+        .balances-row { display: flex; gap: 24px; }
+        .bal-card { display: flex; align-items: center; gap: 16px; background: var(--white); border: 3px solid var(--basil); border-radius: 16px; padding: 16px 24px; box-shadow: 4px 4px 0 var(--basil); flex: 1; }
+        .bal-icon { font-size: 32px; }
+        .bal-val { font-family: 'Unbounded'; font-weight: 700; font-size: 24px; }
+        .bal-label { font-size: 12px; opacity: 0.7; font-weight: 600; }
+        .sub-status { background: var(--leaf-light); border: 3px solid var(--leaf); display: flex; justify-content: space-between; align-items: center; padding: 20px; border-radius: 16px; box-shadow: 4px 4px 0 var(--leaf); }
+        .pricing-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+        .price-card { background: var(--white); border: 3px solid var(--basil); border-radius: 20px; padding: 24px; box-shadow: 6px 6px 0 var(--basil); position: relative; display: flex; flex-direction: column; gap: 16px; }
+        .price-card.premium { border-color: var(--tomato); box-shadow: 8px 8px 0 var(--tomato); }
+        .premium-badge { position: absolute; top: -14px; right: 20px; background: var(--mustard); border: 2px solid var(--basil); padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; box-shadow: 2px 2px 0 var(--basil); transform: rotate(3deg); }
+        .price-card h3 { font-size: 24px; margin-bottom: 4px; }
+        .price-tag { font-size: 32px; font-weight: 700; font-family: 'Unbounded'; }
+        .price-tag span { font-size: 14px; font-weight: 400; opacity: 0.6; font-family: 'Golos Text'; }
+        .feature-list { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+        .feature-item { display: flex; align-items: flex-start; gap: 12px; font-size: 14px; font-weight: 500; line-height: 1.3; }
+        .feat-yes { color: var(--leaf); font-weight: 700; font-size: 18px; flex-shrink: 0; }
+        .feat-no { color: #ccc; font-weight: 700; font-size: 18px; flex-shrink: 0; }
+        .pay-history { width: 100%; border-collapse: collapse; }
+        .pay-history td { padding: 12px; border-bottom: 1px solid rgba(0,0,0,0.1); font-size: 14px; font-weight: 500; }
+        .pay-history tr:last-child td { border-bottom: none; }
+
+        /* --- АНАЛИТИКА --- */
+        .period-switcher { display: flex; gap: 6px; }
+        .period-btn { padding: 6px 12px; border: 2px solid var(--basil); background: var(--white); border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 12px; box-shadow: 2px 2px 0 var(--basil); transition: all 0.1s; }
+        .period-btn:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--basil); background: var(--cream); }
+        .period-btn.active { background: var(--basil); color: var(--white); }
+        
+        .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+        .metric-card { display: flex; align-items: center; gap: 12px; background: var(--white); border: 3px solid var(--basil); border-radius: 16px; padding: 12px; box-shadow: 4px 4px 0 var(--basil); }
+        .m-icon { font-size: 18px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--basil); border-radius: 10px; background: var(--cream); flex-shrink: 0; }
+        .m-val { font-family: 'Unbounded'; font-weight: 700; font-size: 18px; line-height: 1; }
+        .m-label { font-size: 11px; opacity: 0.7; font-weight: 600; margin-top: 2px; }
+        
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .chart-card { background: var(--cream); border: 3px solid var(--basil); border-radius: 16px; padding: 24px; box-shadow: 4px 4px 0 var(--basil); }
+        .chart-title { font-weight: 700; margin-bottom: 24px; font-size: 16px; text-align: center; }
+        
+        .chart-body { display: flex; flex-direction: column; gap: 12px; }
+        .bar-chart { display: flex; align-items: flex-end; justify-content: space-between; height: 220px; background-image: linear-gradient(to top, transparent 0, transparent 39px, rgba(30,27,24,0.15) 40px); background-size: 100% 40px; border-bottom: 3px solid var(--basil); border-left: 3px solid var(--basil); padding: 0 20px; position: relative; }
+        .bar-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; width: 12%; height: 100%; }
+        .bar-val { font-size: 12px; font-weight: 700; margin-bottom: 6px; font-family: 'Unbounded'; }
+        .bar { width: 80%; max-width: 40px; border: 2px solid var(--basil); border-radius: 8px 8px 0 0; transition: height 0.5s ease; }
+        .bar.leaf { background: var(--leaf); }
+        .bar.fail { background: var(--mustard); border-color: var(--basil); }
+        .bar.zero { width: 80%; max-width: 40px; height: 4px !important; background: var(--basil); border: none; border-radius: 2px; opacity: 0.3; }
+        .bar-labels { display: flex; justify-content: space-between; padding: 0 20px; }
+        .bar-label { font-size: 12px; font-weight: 600; opacity: 0.6; width: 12%; text-align: center; }
+
+        .premium-analytics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+        .donut-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+        .donut-chart { width: 120px; height: 120px; border-radius: 50%; background: conic-gradient(var(--leaf) 0% 65%, var(--mustard) 65% 80%, var(--tomato) 80% 100%); display: flex; align-items: center; justify-content: center; border: 3px solid var(--basil); box-shadow: 2px 2px 0 var(--basil); }
+        .donut-hole { width: 76px; height: 76px; background: var(--cream); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; text-align: center; line-height: 1.2; }
+        .donut-legend { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; font-size: 11px; font-weight: 600; }
+        .leg-item { display: flex; align-items: center; gap: 4px; }
+        .leg-dot { width: 10px; height: 10px; border-radius: 2px; border: 1px solid var(--basil); }
+
+        .heatmap-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; }
+        .heat-cell { aspect-ratio: 1; border: 1px solid rgba(0,0,0,0.1); border-radius: 4px; }
+        .h-empty { background: var(--white); }
+        .h-low { background: #FCDCC4; }
+        .h-med { background: #F9C4B8; }
+        .h-high { background: #F0907B; }
+        .heatmap-legend { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 10px; opacity: 0.6; }
+
+        /* --- ПРОФИЛЬ --- */
+        .profile-header { display: flex; align-items: center; gap: 24px; background: var(--white); border: 3px solid var(--basil); border-radius: 20px; padding: 24px; box-shadow: 6px 6px 0 var(--basil); }
+        .p-avatar { width: 80px; height: 80px; border-radius: 50%; background: var(--tomato); border: 3px solid var(--basil); display: flex; align-items: center; justify-content: center; font-size: 40px; box-shadow: 4px 4px 0 var(--basil); flex-shrink: 0; }
+        .p-info { flex: 1; text-align: left; }
+        .p-name { font-family: 'Unbounded'; font-weight: 700; font-size: 24px; margin-bottom: 4px; }
+        .p-meta { font-size: 14px; opacity: 0.7; font-weight: 500; }
+        .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .settings-block { background: var(--white); border: 3px solid var(--basil); border-radius: 16px; padding: 20px; box-shadow: 4px 4px 0 var(--basil); }
+        .sb-header { font-weight: 700; margin-bottom: 16px; font-size: 16px; border-bottom: 2px dashed var(--basil); padding-bottom: 12px; }
+        .p-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .p-row:last-child { border-bottom: none; }
+        .p-label { font-size: 14px; font-weight: 600; opacity: 0.8; }
+        .p-val { font-size: 14px; font-weight: 700; margin-right: auto; margin-left: 12px; color: var(--basil); }
+        .p-social { display: flex; flex-direction: column; gap: 12px; }
+        .p-social-row { display: flex; justify-content: space-between; align-items: center; }
+        .p-social-name { font-weight: 600; font-size: 14px; }
+        .p-card-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 2px solid var(--basil); border-radius: 8px; margin-bottom: 12px; background: var(--cream); }
+        .p-card-num { font-family: 'JetBrains Mono'; font-weight: 700; font-size: 14px; }
+        .p-actions { display: flex; gap: 16px; margin-top: 8px; }
+        .p-action-btn { flex: 1; }
+
+        /* --- НАСТРОЙКИ --- */
+        .settings-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .setting-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .setting-row:last-child { margin-bottom: 0; }
+        .s-label { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+        .s-hint { font-size: 12px; opacity: 0.6; margin-top: 4px; max-width: 300px; line-height: 1.3; }
+        .s-tooltip { cursor: help; border: 1px solid var(--basil); border-radius: 50%; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; background: var(--cream); }
+        
+        .stepper { display: flex; align-items: center; gap: 8px; }
+        .step-btn { width: 32px; height: 32px; border: 2px solid var(--basil); background: var(--white); cursor: pointer; border-radius: 8px; box-shadow: 2px 2px 0 var(--basil); font-weight: 700; display: flex; align-items: center; justify-content: center; transition: all 0.1s; flex-shrink: 0; }
+        .step-btn:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--basil); background: var(--cream); }
+        .step-btn:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--basil); }
+        .step-val { font-family: 'Unbounded'; font-weight: 700; font-size: 16px; width: 60px; text-align: center; padding: 4px; border: 2px solid var(--basil); border-radius: 8px; background: var(--cream); }
+
+        .domain-input { width: 100%; padding: 10px; border: 2px solid var(--basil); border-radius: 8px; background: var(--white); margin-bottom: 8px; font-weight: 600; }
+        .domain-input:last-child { margin-bottom: 0; }
+
+        .range-wrap { display: flex; align-items: center; gap: 12px; width: 200px; }
+        .range-slider { -webkit-appearance: none; appearance: none; width: 150px; height: 12px; background: var(--white); border: 2px solid var(--basil); border-radius: 6px; cursor: pointer; }
+        .range-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 24px; height: 24px; background: var(--tomato); border: 2px solid var(--basil); border-radius: 6px; box-shadow: 2px 2px 0 var(--basil); cursor: pointer; }
+        .range-slider::-moz-range-thumb { width: 24px; height: 24px; background: var(--tomato); border: 2px solid var(--basil); border-radius: 6px; box-shadow: 2px 2px 0 var(--basil); cursor: pointer; }
+        .range-val { font-family: 'Unbounded'; font-weight: 700; font-size: 14px; padding: 4px 8px; border: 2px solid var(--basil); border-radius: 8px; background: var(--cream); min-width: 40px; text-align: center; }
+
+        /* --- НОВЫЕ ЗАГЛУШКИ --- */
+        .placeholder-card { text-align: left; padding: 40px; display: flex; flex-direction: column; gap: 24px; }
+        .ph-block { background: var(--white); border: 2px solid var(--basil); border-radius: 12px; padding: 20px; }
+        .ph-title { font-size: 18px; margin-bottom: 8px; }
+        .ph-text { font-size: 14px; line-height: 1.5; opacity: 0.8; }
+        .ph-center { text-align: center; padding: 40px 20px; }
+
+        /* --- ARCHIVE MODAL --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-box { background: var(--cream); border: 3px solid var(--basil); border-radius: 20px; box-shadow: 8px 8px 0 var(--basil); padding: 24px; width: 500px; max-height: 80vh; display: flex; flex-direction: column; gap: 16px; }
+        .archive-header { display: flex; justify-content: space-between; align-items: center; }
+        .close-btn { width: 32px; height: 32px; background: var(--white); border: 2px solid var(--basil); border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 700; box-shadow: 2px 2px 0 var(--basil); }
+        .close-btn:hover { background: var(--tomato); color: var(--white); }
+        .date-picker { width: 100%; padding: 8px; border: 2px solid var(--basil); border-radius: 8px; font-family: 'Golos Text'; background: var(--white); }
+        .archive-task { padding: 10px; background: var(--white); border: 2px solid var(--basil); border-radius: 8px; margin-bottom: 8px; display: flex; gap: 10px; align-items: center; }
+
+        /* RIGHT PANEL */
+        .dash-right { grid-column: 3; grid-row: 2; background: var(--white); border: 3px solid var(--basil); border-radius: 24px; box-shadow: 8px 8px 0 var(--basil); padding: 24px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px; position: relative; overflow: hidden; }
+        .dash-right-top { display: flex; justify-content: space-between; width: 100%; gap: 10px; }
+        .stat-box { flex: 1; background: var(--cream); border: 2px solid var(--basil); padding: 8px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 700; font-size: 14px; box-shadow: 3px 3px 0 var(--basil); cursor: pointer; transition: 0.2s; }
+        .stat-box:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--basil); background: var(--white); }
+        .tomatoro-wrapper { position: relative; }
+        .tomatoro-char { width: 140px; height: 140px; position: relative; animation: breathe 3s infinite ease-in-out; }
+        @keyframes breathe { 0%, 100% { transform: scale(1) translateY(0); } 50% { transform: scale(1.05) translateY(-5px); } }
+        .tomato-body { width: 120px; height: 120px; background: var(--tomato); border: 3px solid var(--basil); border-radius: 50%; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); box-shadow: 4px 4px 0 var(--basil); overflow: hidden; }
+        .tomato-body::after { content: ''; position: absolute; top: 15px; left: 20px; width: 30px; height: 40px; background: rgba(255,255,255,0.4); border-radius: 50%; transform: rotate(-20deg); }
+        .tomato-leaf { width: 60px; height: 40px; background: var(--leaf); border: 3px solid var(--basil); position: absolute; top: 0; left: 50%; transform: translateX(-50%); border-radius: 0 50% 50% 50%; z-index: 2; transform-origin: bottom center; animation: leaf-wave 4s infinite ease-in-out; }
+        @keyframes leaf-wave { 0%, 100% { transform: translateX(-50%) rotate(-5deg); } 50% { transform: translateX(-50%) rotate(5deg); } }
+        .face { position: absolute; width: 100%; height: 60px; bottom: 40px; display: flex; justify-content: center; gap: 20px; z-index: 3; }
+        .eye { width: 12px; height: 12px; background: var(--basil); border-radius: 50%; position: relative; top: 10px; transition: all 0.3s ease; }
+        .mouth { position: absolute; bottom: 20px; width: 30px; height: 10px; border-bottom: 3px solid var(--basil); border-radius: 0 0 20px 20px; transition: all 0.3s ease; }
+        .char-state-cheerful .eye { height: 4px; border-radius: 2px; top: 15px; }
+        .char-state-cheerful .mouth { border-bottom-width: 4px; border-radius: 0 0 30px 30px; }
+        .charge-btn { position: absolute; bottom: 10px; right: 10px; width: 36px; height: 36px; background: var(--mustard); border: 2px solid var(--basil); border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; box-shadow: 3px 3px 0 var(--basil); transition: 0.1s; }
+        .charge-btn:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--basil); }
+        .chat-bubble { background: var(--cream); border: 3px solid var(--basil); border-radius: 16px 16px 16px 0; padding: 12px 16px; box-shadow: 4px 4px 0 var(--basil); width: 100%; position: relative; font-weight: 500; text-align: left; }
+        .typing-dot { height: 8px; width: 8px; background: var(--basil); border-radius: 50%; display: inline-block; margin: 0 2px; animation: typing 1s infinite; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; } .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        .history-section { width: 100%; margin-top: 10px; border-top: 2px dashed var(--basil); padding-top: 12px; flex: 1; overflow-y: auto; }
+        .history-header { font-size: 12px; font-weight: 700; text-align: left; margin-bottom: 8px; opacity: 0.7; }
+        .history-item { display: flex; align-items: center; gap: 8px; font-size: 12px; text-align: left; padding: 4px 0; }
+        .status-icon { width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--basil); flex-shrink: 0; }
+
+        /* LAYOUT MODES */
+        .tasks-mode .dash-right, .tariffs-mode .dash-right, .analytics-mode .dash-right, .profile-mode .dash-right, .settings-mode .dash-right, .help-mode .dash-right, .gamification-mode .dash-right { display: none; }
+        .tasks-mode .dash-main, .tariffs-mode .dash-main, .analytics-mode .dash-main, .profile-mode .dash-main, .settings-mode .dash-main, .help-mode .dash-main, .gamification-mode .dash-main { grid-column: 2 / 4; }
+
+        .demo-controls { position: fixed; bottom: 20px; right: 20px; background: var(--basil); color: var(--white); padding: 16px; border-radius: 16px; display: flex; flex-direction: column; gap: 10px; z-index: 100; box-shadow: 8px 8px 0 var(--tomato); border: 2px solid var(--tomato); }
+        .demo-controls button { background: var(--cream); color: var(--basil); border: none; border-radius: 8px; padding: 8px 12px; font-family: 'Unbounded', sans-serif; font-size: 12px; cursor: pointer; transition: all 0.2s; }
+        .demo-controls button:hover { background: var(--tomato); color: var(--white); transform: scale(1.05); }
+    </style>
+</head>
+<body>
+
+    <div class="bg-pattern"></div>
+    <div id="seedContainer"></div>
+
+    <div class="app-layout" id="appLayout">
+        <!-- ЛЕВЫЙ САЙДБАР -->
+        <div class="dash-sidebar">
+            <div class="sub-badge" onclick="switchView('tariffs', document.querySelector('[data-view=\'tariffs\']'))">
+                Тариф: Стандартный
+                <span class="sub-arrow">→</span>
+            </div>
+
+            <div class="nav-item active" data-view="today" onclick="switchView('today', this)">🍅 Сегодня</div>
+            <div class="nav-item" data-view="tasks" onclick="switchView('tasks', this)">📋 Задачи</div>
+            <div class="nav-item" data-view="analytics" onclick="switchView('analytics', this)">📊 Аналитика</div>
+            <div class="nav-item" data-view="profile" onclick="switchView('profile', this)">👤 Профиль</div>
+            <div class="nav-item" data-view="tariffs" onclick="switchView('tariffs', this)">💳 Тарифы</div>
+            <div class="nav-item" data-view="settings" onclick="switchView('settings', this)">⚙️ Настройки</div>
+            <div class="nav-item" data-view="gamification" onclick="switchView('gamification', this)">🏆 Геймификация</div>
+            <div class="nav-item" data-view="help" onclick="switchView('help', this)">❓ Справка</div>
+            
+            <div class="settings-box">
+                <div class="sb-title">Настройки уведомлений</div>
+                <div class="toggle-row"><span>Голос Томаторо</span><div class="toggle-switch on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+                <div class="toggle-row"><span>Звук уведомлений</span><div class="toggle-switch on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+                <div class="toggle-row"><span>Web Push</span><div class="toggle-switch" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+            </div>
+
+            <div class="profile-card">
+                <div class="pc-label">
+                    <span>Ваш уровень:</span>
+                    <button class="pc-level-btn" onclick="switchView('gamification', document.querySelector('[data-view=\'gamification\']'))">Уровень 3</button>
+                </div>
+                <div class="pc-current-level"><span style="font-size: 24px;">🍅</span> Бычье сердце</div>
+                <div class="pc-next-level">Следующий: Оранжевый король</div>
+                <div class="progress-bar"><div class="progress-fill"></div></div>
+                <div class="pc-footer"><span>Бонус: 3x</span><span class="pc-link" onclick="switchView('gamification', document.querySelector('[data-view=\'gamification\']'))">Подробнее</span></div>
+                <div class="pc-coins">
+                    <span style="font-size: 18px;">⚡</span>
+                    <span class="pc-coins-text">У вас <span id="sidebarFocusPoints">4500</span> очков фокуса</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ВЕРХНИЙ ТАЙМЛАЙН -->
+        <div class="top-timeline">
+            <div class="tl-header">
+                <h3>Таймлайн дня</h3>
+                <span style="font-size: 12px; color: #555;">Тяните мышью или колесиком для прокрутки</span>
+            </div>
+            <div class="tl-track no-scrollbar" id="timelineTrack">
+                <div class="pomodoro-group">
+                    <div class="segment seg-done" onclick="selectSprint(this)">🍅</div>
+                    <div class="segment seg-break-done">☕</div>
+                    <div class="segment seg-done" onclick="selectSprint(this)">🍅</div>
+                    <div class="segment seg-break-done">☕</div>
+                    <div class="segment seg-done" onclick="selectSprint(this)">🍅</div>
+                    <div class="segment seg-break-done">☕</div>
+                    <div class="segment seg-current" onclick="selectSprint(this)">🍅</div>
+                    <div class="segment seg-long-break seg-break-done">🛋️</div>
+                    <div class="add-sprint-btn" onclick="addSprintToPomodoro(this)">+</div>
+                </div>
+                <div class="seg-divider"></div>
+                <div class="pomodoro-group">
+                    <div class="segment seg-upcoming" onclick="selectSprint(this)">🍅</div>
+                    <div class="segment seg-upcoming" style="border-radius: 4px; transform: scale(0.8);">☕</div>
+                    <div class="segment seg-upcoming" onclick="selectSprint(this)">🍅</div>
+                    <div class="add-sprint-btn" onclick="addSprintToPomodoro(this)">+</div>
+                </div>
+                <div class="seg-divider"></div>
+                <div class="pomodoro-add" onclick="addPomodoroToTimeline()">+ Помодоро</div>
+            </div>
+            <div class="tl-legend">
+                <div>🍅 Спринт</div><div>☕ Перерыв</div><div>🛋️ Длинный отдых</div><div>➕ Добавить</div>
+            </div>
+        </div>
+
+        <!-- ЦЕНТРАЛЬНАЯ ЗОНА -->
+        <div class="dash-main">
+            
+            <!-- ВЬЮХА: СЕГОДНЯ -->
+            <div class="view active" id="viewToday">
+                <div>
+                    <div class="section-title">
+                        <span>Текущий спринт</span> 
+                        <span class="tag leaf" id="statusTag">В фокусе</span>
+                    </div>
+                    <div class="card-brutal" style="display: flex; flex-direction: column; align-items: center; gap: 16px; margin-top: 12px; position: relative;">
+                        <button class="restart-btn" title="Перезапустить спринт" onclick="alert('Спринт перезапущен!')">↻</button>
+                        <div class="timer-wrap">
+                            <div class="timer-circle running" id="timerCircle">
+                                <div class="timer-text mono" id="timerText">18:40</div>
+                                <div style="font-size: 10px; opacity: 0.6;">До конца спринта</div>
+                            </div>
+                        </div>
+                        <input type="text" class="goal-input mono" placeholder="Задача спринта" value="Написать 3 абзаца статьи" id="goalInput">
+                        <div style="display: flex; gap: 12px; width: 100%;">
+                            <button class="btn-brutal btn-secondary btn-sm" style="flex: 1;">⏸ Пауза</button>
+                            <button class="btn-brutal btn-sm" style="background: var(--tomato-dark); flex: 1;">⏹ Завершить спринт</button>
+                        </div>
+                        <button class="btn-brutal btn-mustard btn-sm" style="width: 100%;">🏁 Завершить помодоро</button>
+                    </div>
+                </div>
+                <div>
+                    <div class="section-title"><span>Текущий помодоро (Цикл 1)</span></div>
+                    <div class="card-brutal" style="margin-top: 12px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; font-weight: 600;">
+                            <span>Спринты в помодоро: 3 из 4 завершено</span>
+                            <span class="pc-link" style="cursor: pointer;">Добавить спринт</span>
+                        </div>
+                        <div style="display: flex; gap: 8px; justify-content: center;">
+                            <div class="segment seg-done" style="cursor: default;">🍅</div>
+                            <div class="segment seg-done" style="cursor: default;">🍅</div>
+                            <div class="segment seg-done" style="cursor: default;">🍅</div>
+                            <div class="segment seg-current" style="cursor: default;">🍅</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: auto; display: flex; justify-content: flex-end;">
+                    <button class="btn-brutal btn-sm">🌙 Завершить день</button>
+                </div>
+            </div>
+
+            <!-- ВЬЮХА: ЗАДАЧИ -->
+            <div class="view" id="viewTasks">
+                <div class="section-title">
+                    <span>Управление задачами</span>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-brutal btn-secondary btn-sm" onclick="openArchive()">📅 Архив</button>
+                        <button class="btn-brutal btn-sm">🌙 Завершить день</button>
+                    </div>
+                </div>
+                <div class="tasks-layout">
+                    <div class="card-brutal" style="display: flex; flex-direction: column; max-height: 600px;">
+                        <h3 style="font-size: 16px; margin-bottom: 12px;">Бэклог (Задачи дня)</h3>
+                        <div class="task-list no-scrollbar" id="taskList">
+                            <div class="task-item"><div class="task-main"><div class="status-btn status-s-todo" onclick="cycleStatus(this)" title="Сменить статус"></div><span class="task-text" ondblclick="editTask(this)" contenteditable="false">Написать 3 абзаца статьи</span></div><div class="task-meta"><select class="assign-btn"><option>Не назначено</option><option>П1 С1</option><option selected>П1 С3</option><option>П2 С1</option></select></div><button class="task-del-btn" title="Удалить задачу" onclick="deleteTask(this)">✕</button></div>
+                            <div class="task-item"><div class="task-main"><div class="status-btn status-s-done" onclick="cycleStatus(this)" title="Сменить статус">✓</div><span class="task-text" ondblclick="editTask(this)" contenteditable="false">Сверстать компонент таймера</span></div><div class="task-meta"><select class="assign-btn"><option>Не назначено</option><option selected>П1 С1</option><option>П1 С2</option></select></div><button class="task-del-btn" title="Удалить задачу" onclick="deleteTask(this)">✕</button></div>
+                            <div class="task-item"><div class="task-main"><div class="status-btn status-s-todo" onclick="cycleStatus(this)" title="Сменить статус"></div><span class="task-text" ondblclick="editTask(this)" contenteditable="false">Ответить на письма</span></div><div class="task-meta"><select class="assign-btn"><option selected>Не назначено</option><option>П2 С1</option></select></div><button class="task-del-btn" title="Удалить задачу" onclick="deleteTask(this)">✕</button></div>
+                            <div class="task-item"><div class="task-main"><div class="status-btn status-s-partial" onclick="cycleStatus(this)" title="Сменить статус">⚠</div><span class="task-text" ondblclick="editTask(this)" contenteditable="false">Проверить почту</span></div><div class="task-meta"><select class="assign-btn"><option>Не назначено</option><option selected>П1 С2</option></select></div><button class="task-del-btn" title="Удалить задачу" onclick="deleteTask(this)">✕</button></div>
+                             <div class="task-item"><div class="task-main"><div class="status-btn status-s-fail" onclick="cycleStatus(this)" title="Сменить статус">✕</div><span class="task-text" ondblclick="editTask(this)" contenteditable="false">Сходить в магазин</span></div><div class="task-meta"><select class="assign-btn"><option selected>Не назначено</option></select></div><button class="task-del-btn" title="Удалить задачу" onclick="deleteTask(this)">✕</button></div>
+                        </div>
+                        <div class="add-task-row"><input type="text" class="add-task-input" placeholder="Добавить задачу..." id="newTaskInput" onkeypress="if(event.keyCode===13) addTask()"><button class="btn-brutal btn-sm" onclick="addTask()">+ Задача</button></div>
+                    </div>
+                    <div class="card-brutal no-scrollbar" style="display: flex; flex-direction: column; max-height: 600px; overflow-y: auto;">
+                        <h3 style="font-size: 16px; margin-bottom: 12px;">Структура дня (Помодоро)</h3>
+                        <div class="pomodoro-card"><div class="pc-head"><span>Помодоро 1</span><span style="font-size: 10px; background: var(--white); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--basil);">3/4 спринтов</span></div><div class="sprint-row"><div class="sprint-num">1</div><div class="sprint-task" style="text-decoration: line-through; opacity: 0.5;">Сверстать компонент таймера</div><span class="tag leaf" style="font-size: 10px; padding: 2px 6px;">Успех</span></div><div class="sprint-row"><div class="sprint-num">2</div><div class="sprint-task">Проверить почту</div><span class="tag" style="font-size: 10px; padding: 2px 6px; background: var(--mustard); color: var(--basil);">Частично</span></div><div class="sprint-row"><div class="sprint-num">3</div><div class="sprint-task">Написать 3 абзаца статьи</div><span class="tag" style="font-size: 10px; padding: 2px 6px; background: var(--tomato);">В фокусе</span></div><div class="sprint-row"><div class="sprint-num">4</div><div class="sprint-empty">Пустой спринт</div><button class="btn-brutal btn-sm" style="padding: 2px 8px; font-size: 10px;">+ Задача</button></div><div style="padding: 8px; text-align: center; border-top: 2px dashed var(--basil);"><button class="btn-brutal btn-secondary btn-sm" style="width: 100%;">+ Спринт в помодоро</button></div></div>
+                        <div class="pomodoro-card"><div class="pc-head"><span>Помодоро 2</span><span style="font-size: 10px; background: var(--white); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--basil);">0/4 спринтов</span></div><div class="sprint-row"><div class="sprint-num">1</div><div class="sprint-empty">Пустой спринт</div><button class="btn-brutal btn-sm" style="padding: 2px 8px; font-size: 10px;">+ Задача</button></div><div style="padding: 8px; text-align: center; border-top: 2px dashed var(--basil);"><button class="btn-brutal btn-secondary btn-sm" style="width: 100%;">+ Спринт в помодоро</button></div></div>
+                        <button class="btn-brutal btn-secondary btn-sm" style="width: 100%; margin-top: 8px; border-style: dashed;">+ Добавить Помодоро в день</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ВЬЮХА: АНАЛИТИКА -->
+            <div class="view" id="viewAnalytics">
+                <div class="section-title"><span>Аналитика продуктивности</span><div class="period-switcher"><button class="period-btn" onclick="setPeriod(this)">День</button><button class="period-btn active" onclick="setPeriod(this)">Неделя</button><button class="period-btn" onclick="setPeriod(this)">Месяц</button><button class="period-btn" onclick="setPeriod(this)">Квартал</button><button class="period-btn" onclick="setPeriod(this)">Год</button></div></div>
+                <div class="metrics-grid"><div class="metric-card"><div class="m-icon">⏱</div><div><div class="m-val">15ч 40м</div><div class="m-label">Время в фокусе</div></div></div><div class="metric-card"><div class="m-icon">🍅</div><div><div class="m-val">18 шт</div><div class="m-label">Завершено спринтов</div></div></div><div class="metric-card"><div class="m-icon">✕</div><div><div class="m-val">3 шт</div><div class="m-label">Срывов</div></div></div><div class="metric-card"><div class="m-icon">⏳</div><div><div class="m-val">1ч 20м</div><div class="m-label">Время отвлечений</div></div></div></div>
+                <div class="charts-grid"><div class="chart-card"><div class="chart-title">Время в фокусе по дням</div><div class="chart-body"><div class="bar-chart"><div class="bar-wrapper"><span class="bar-val">2.5ч</span><div class="bar leaf" style="height: 50%"></div></div><div class="bar-wrapper"><span class="bar-val">3.5ч</span><div class="bar leaf" style="height: 70%"></div></div><div class="bar-wrapper"><span class="bar-val">4.5ч</span><div class="bar leaf" style="height: 90%"></div></div><div class="bar-wrapper"><span class="bar-val">1.5ч</span><div class="bar leaf" style="height: 30%"></div></div><div class="bar-wrapper"><span class="bar-val">4ч</span><div class="bar leaf" style="height: 80%"></div></div><div class="bar-wrapper"><span class="bar-val">1ч</span><div class="bar leaf" style="height: 20%"></div></div><div class="bar-wrapper"><span class="bar-val">0.5ч</span><div class="bar leaf" style="height: 10%"></div></div></div><div class="bar-labels"><span class="bar-label">Пн</span><span class="bar-label">Вт</span><span class="bar-label">Ср</span><span class="bar-label">Чт</span><span class="bar-label">Пт</span><span class="bar-label">Сб</span><span class="bar-label">Вс</span></div></div></div><div class="chart-card"><div class="chart-title">Количество срывов по дням</div><div class="chart-body"><div class="bar-chart"><div class="bar-wrapper"><span class="bar-val">1</span><div class="bar fail" style="height: 20%"></div></div><div class="bar-wrapper"><span class="bar-val">3</span><div class="bar fail" style="height: 60%"></div></div><div class="bar-wrapper"><span class="bar-val">0</span><div class="bar fail zero"></div></div><div class="bar-wrapper"><span class="bar-val">5</span><div class="bar fail" style="height: 100%"></div></div><div class="bar-wrapper"><span class="bar-val">2</span><div class="bar fail" style="height: 40%"></div></div><div class="bar-wrapper"><span class="bar-val">0</span><div class="bar fail zero"></div></div><div class="bar-wrapper"><span class="bar-val">0</span><div class="bar fail zero"></div></div></div><div class="bar-labels"><span class="bar-label">Пн</span><span class="bar-label">Вт</span><span class="bar-label">Ср</span><span class="bar-label">Чт</span><span class="bar-label">Пт</span><span class="bar-label">Сб</span><span class="bar-label">Вс</span></div></div></div></div>
+                <div class="chart-card" style="grid-column: 1 / -1;"><div class="chart-title">Динамика фокуса и Индекс продуктивности</div><p style="font-size: 12px; text-align: center; margin-bottom: 20px; opacity: 0.7;">Время фокуса колеблется (зубчатая линия), но общий тренд (штриховая линия) растёт. Ты прогрессируешь, даже если были провалы!</p><div style="display: flex; align-items: flex-end; justify-content: space-between; height: 200px; border-bottom: 3px solid var(--basil); border-left: 3px solid var(--basil); padding: 20px; background-image: linear-gradient(to top, transparent 0, transparent 39px, rgba(30,27,24,0.15) 40px); background-size: 100% 40px;"><svg width="100%" height="100%" viewBox="0 0 500 200" preserveAspectRatio="none" style="overflow: visible;"><path d="M 20,170 L 100,120 L 180,160 L 260,90 L 340,130 L 420,60 L 480,80 L 480,200 L 20,200 Z" fill="rgba(76, 159, 112, 0.2)" stroke="var(--leaf)" stroke-width="3" /><path d="M 20,150 L 480,70" fill="none" stroke="var(--tomato)" stroke-width="3" stroke-dasharray="8, 8" /><circle cx="20" cy="170" r="5" fill="var(--basil)" /><circle cx="100" cy="120" r="5" fill="var(--basil)" /><circle cx="180" cy="160" r="5" fill="var(--basil)" /><circle cx="260" cy="90" r="5" fill="var(--basil)" /><circle cx="340" cy="130" r="5" fill="var(--basil)" /><circle cx="420" cy="60" r="5" fill="var(--basil)" /><circle cx="480" cy="80" r="5" fill="var(--basil)" /></svg></div><div style="display: flex; justify-content: space-between; padding: 10px 20px 0 20px; font-size: 11px; font-weight: 600; opacity: 0.6;"><span>Месяц 1</span><span>Месяц 2</span><span>Месяц 3</span></div></div>
+                <div class="premium-analytics"><div class="chart-card"><div class="chart-title">Распределение спринтов</div><div class="donut-wrap"><div class="donut-chart"><div class="donut-hole">18<br>спринтов</div></div><div class="donut-legend"><div class="leg-item"><div class="leg-dot" style="background: var(--leaf);"></div>Успех (12)</div><div class="leg-item"><div class="leg-dot" style="background: var(--mustard);"></div>Частично (3)</div><div class="leg-item"><div class="leg-dot" style="background: var(--tomato);"></div>Срыв (3)</div></div></div></div><div class="chart-card"><div class="chart-title">Карта отвлечений (по часам)</div><div class="heatmap-grid"><div class="heat-cell h-empty"></div><div class="heat-cell h-low"></div><div class="heat-cell h-empty"></div><div class="heat-cell h-empty"></div><div class="heat-cell h-empty"></div><div class="heat-cell h-low"></div><div class="heat-cell h-empty"></div><div class="heat-cell h-empty"></div><div class="heat-cell h-med"></div><div class="heat-cell h-empty"></div><div class="heat-cell h-low"></div><div class="heat-cell h-empty"></div><div class="heat-cell h-empty"></div><div class="heat-cell h-med"></div><div class="heat-cell h-low"></div><div class="heat-cell h-empty"></div><div class="heat-cell h-empty"></div><div class="heat-cell h-low"></div><div class="heat-cell h-empty"></div><div class="heat-cell h-high"></div><div class="heat-cell h-high"></div><div class="heat-cell h-empty"></div><div class="heat-cell h-med"></div><div class="heat-cell h-empty"></div><div class="heat-cell h-empty"></div><div class="heat-cell h-empty"></div><div class="heat-cell h-low"></div><div class="heat-cell h-med"></div><div class="heat-cell h-empty"></div><div class="heat-cell h-empty"></div><div class="heat-cell h-empty"></div><div class="heat-cell h-low"></div><div class="heat-cell h-empty"></div><div class="heat-cell h-empty"></div><div class="heat-cell h-empty"></div><div class="heat-cell h-empty"></div><div class="heat-cell h-low"></div><div class="heat-cell h-empty"></div><div class="heat-cell h-empty"></div><div class="heat-cell h-empty"></div></div><div class="heatmap-legend"><span>Меньше</span><div class="heat-cell h-empty" style="width:12px; height:12px;"></div><div class="heat-cell h-low" style="width:12px; height:12px;"></div><div class="heat-cell h-med" style="width:12px; height:12px;"></div><div class="heat-cell h-high" style="width:12px; height:12px;"></div><span>Больше</span></div></div><div class="chart-card" style="background: var(--white); display: flex; flex-direction: column;"><div class="chart-title">ИИ-Паттерны</div><div style="flex: 1; display: flex; flex-direction: column; gap: 12px;"><div style="background: var(--cream); border: 2px solid var(--basil); border-radius: 12px; padding: 12px; font-size: 12px; line-height: 1.4;"><strong>🍅 Томаторо заметил:</strong><br>"Ты чаще всего срываешься после 15:00. Старайся делать сложные задачи утром!"</div><button class="btn-brutal btn-secondary btn-sm" style="margin-top: auto;">Сбросить паттерны</button></div></div></div>
+            </div>
+
+            <!-- ВЬЮХА: ТАРИФЫ -->
+            <div class="view" id="viewTariffs"><div class="balances-row"><div class="bal-card"><span class="bal-icon">🍅</span><div style="flex:1;"><div class="bal-val" id="tomatoBalance">1500</div><div class="bal-label">Помидорок на счету</div></div><button class="btn-brutal btn-mustard btn-sm" id="spendCoinsBtn" onclick="spendCoins()">Потратить помидорки</button></div><div class="bal-card"><span class="bal-icon">⚡</span><div style="flex:1;"><div class="bal-val" id="focusBalance">4500</div><div class="bal-label">Очков фокуса</div></div><button class="btn-brutal btn-sm" onclick="buyTomatoes()">Купить помидорки</button></div></div><div class="sub-status"><div><h3 style="font-size: 18px; margin-bottom: 4px;">Ваш текущий тариф: Стандартный</h3><p style="font-size: 14px; opacity: 0.8;" id="subDateText">Действует до 24 ноября 2023 г. (осталось 14 дней)</p></div><button class="btn-brutal btn-secondary btn-sm">Отменить подписку</button></div><div class="pricing-layout"><div class="price-card"><h3>Базовый</h3><div class="price-tag">0 ₽ <span>/ навсегда</span></div><ul class="feature-list"><li class="feature-item"><span class="feat-yes">✓</span> Классический таймер Помодоро</li><li class="feature-item"><span class="feat-yes">✓</span> Список задач на день</li><li class="feature-item"><span class="feat-yes">✓</span> Контроль до 3-х рабочих вкладок</li><li class="feature-item"><span class="feat-yes">✓</span> Текстовое напоминание при возврате</li><li class="feature-item"><span class="feat-yes">✓</span> Простая аналитика продуктивности</li><li class="feature-item"><span class="feat-no">✕</span> Голосовые напоминания от напарника</li><li class="feature-item"><span class="feat-no">✕</span> Эмоции и смена интонации</li><li class="feature-item"><span class="feat-no">✕</span> Память и индивидуальные советы</li></ul><button class="btn-brutal btn-secondary" style="width: 100%; margin-top: 8px; opacity: 0.5; cursor: default;" disabled>Бесплатный тариф</button></div><div class="price-card premium"><div class="premium-badge">Хит 🔥</div><h3>Стандартный</h3><div class="price-tag" id="priceTagRub">300 ₽ <span>/ в месяц</span></div><p style="text-align: center; font-size: 14px; font-weight: 700; color: var(--tomato-dark);" id="discountText">Без скидки</p><ul class="feature-list"><li class="feature-item"><span class="feat-yes">✓</span> Всё из тарифа Базовый</li><li class="feature-item"><span class="feat-yes">✓</span> Обратится голосом и мягко вернёт к задаче</li><li class="feature-item"><span class="feat-yes">✓</span> Будет переживать и менять интонацию, если затягиваешь перерыв</li><li class="feature-item"><span class="feat-yes">✓</span> Запомнит, в какие часы чаще отвлекаешься, и подстроит советы</li><li class="feature-item"><span class="feat-yes">✓</span> Пришлёт системное уведомление, даже если свернул браузер</li><li class="feature-item"><span class="feat-yes">✓</span> Поможет составить план на утро и подведёт итоги вечером</li><li class="feature-item"><span class="feat-yes">✓</span> Геймификация: сорта помидоров, стрики и награды</li></ul><div style="display: flex; flex-direction: column; gap: 10px; margin-top: 8px;"><button class="btn-brutal" id="payBtn">Оплатить 300 ₽ (YooKassa)</button></div></div></div><div class="card-brutal"><h3 style="font-size: 16px; margin-bottom: 12px;">История платежей</h3><table class="pay-history"><tr><td>24 октября 2023</td><td>Стандартный (30 дней)</td><td>Скидка 100% за помидорки</td><td><span class="tag leaf" style="font-size: 10px;">Успешно</span></td></tr><tr><td>24 сентября 2023</td><td>Стандартный (30 дней)</td><td>300 ₽</td><td><span class="tag leaf" style="font-size: 10px;">Успешно</span></td></tr></table></div></div>
+            
+            <!-- ВЬЮХА: ПРОФИЛЬ -->
+            <div class="view" id="viewProfile"><div class="section-title"><span>Профиль и настройки</span></div><div class="profile-header"><div class="p-avatar">🍅</div><div class="p-info"><div class="p-name">Иван Томатов</div><div class="p-meta">Уровень 3: Бычье сердце • 4500 ⚡ ОФ • 1500 🍅 ПК</div></div><button class="btn-brutal btn-secondary btn-sm">Изменить имя</button></div><div class="settings-grid"><div class="settings-block"><div class="sb-header">Контакты и безопасность</div><div class="p-row"><span class="p-label">Телефон</span><span class="p-val">+7 (999) 123-45-67</span><button class="btn-brutal btn-secondary btn-sm">Изменить</button></div><div class="p-row"><span class="p-label">Email</span><span class="p-val">ivan@tomatoro.com</span><button class="btn-brutal btn-secondary btn-sm">Изменить</button></div><div class="p-row"><span class="p-label">Пароль</span><span class="p-val">********</span><button class="btn-brutal btn-secondary btn-sm">Сменить</button></div></div><div class="settings-block"><div class="sb-header">Авторизация через соцсети</div><div class="p-social"><div class="p-social-row"><span class="p-social-name">Сбер ID</span><button class="btn-brutal btn-leaf btn-sm" onclick="toggleSocial(this)">Привязан</button></div><div class="p-social-row"><span class="p-social-name">Яндекс ID</span><button class="btn-brutal btn-secondary btn-sm" onclick="toggleSocial(this)">Привязать</button></div><div class="p-social-row"><span class="p-social-name">ВКонтакте</span><button class="btn-brutal btn-secondary btn-sm" onclick="toggleSocial(this)">Привязать</button></div></div></div><div class="settings-block" style="grid-column: 1 / -1;"><div class="sb-header">Способы оплаты</div><div class="p-card-item"><span class="p-card-num">💳 Visa **** 4242</span><button class="btn-brutal btn-secondary btn-sm">Удалить</button></div><div class="p-card-item"><span class="p-card-num">💳 MasterCard **** 5536</span><button class="btn-brutal btn-secondary btn-sm">Удалить</button></div><button class="btn-brutal btn-mustard btn-sm" style="width: 100%; margin-top: 8px;">+ Добавить новую карту</button></div></div><div class="p-actions"><button class="btn-brutal p-action-btn" onclick="alert('Переход в магазин расширений')">🧩 Установить расширение</button><button class="btn-brutal btn-danger p-action-btn" onclick="alert('Выход из аккаунта...')">🚪 Выйти из профиля</button></div></div>
+
+            <!-- ВЬЮХА: НАСТРОЙКИ -->
+            <div class="view" id="viewSettings">
+                <div class="section-title"><span>Настройки приложения</span><button class="btn-brutal btn-secondary btn-sm" onclick="resetSettings()">Сбросить к рекомендованным</button></div>
+                <div class="settings-layout">
+                    <div class="settings-block"><div class="sb-header">Метод Помодоро ⏱</div>
+                        <div class="setting-row"><div><div class="s-label">Длина рабочего спринта <span class="s-tooltip" title="Классика — 25 минут. Этого достаточно, чтобы погрузиться в задачу.">?</span></div><div class="s-hint">Классика — 25 минут. Этого достаточно, чтобы погрузиться в задачу.</div></div><div class="stepper"><button class="step-btn" onclick="stepChange(this, -5, 5, 90)">-</button><div class="step-val" id="sprintTime">25 мин</div><button class="step-btn" onclick="stepChange(this, 5, 5, 90)">+</button></div></div>
+                        <div class="setting-row"><div><div class="s-label">Короткий перерыв <span class="s-tooltip" title="5 минут — чтобы размяться, выпить воды, но не зайти в соцсети.">?</span></div><div class="s-hint">Встаньте, разомнитесь, не открывайте соцсети.</div></div><div class="stepper"><button class="step-btn" onclick="stepChange(this, -1, 1, 20)">-</button><div class="step-val" id="shortBreak">5 мин</div><button class="step-btn" onclick="stepChange(this, 1, 1, 20)">+</button></div></div>
+                        <div class="setting-row"><div><div class="s-label">Длинный перерыв <span class="s-tooltip" title="Наступает после завершения серии спринтов. 15-30 минут для отдыха мозга.">?</span></div><div class="s-hint">Наступает после завершения серии спринтов.</div></div><div class="stepper"><button class="step-btn" onclick="stepChange(this, -5, 5, 60)">-</button><div class="step-val" id="longBreak">15 мин</div><button class="step-btn" onclick="stepChange(this, 5, 5, 60)">+</button></div></div>
+                        <div class="setting-row"><div><div class="s-label">Спринтов в помодоро <span class="s-tooltip" title="Обычно это 4 спринта (2 часа работы). После него — большой отдых.">?</span></div><div class="s-hint">Обычно 4 спринта (2 часа работы).</div></div><div class="stepper"><button class="step-btn" onclick="stepChange(this, -1, 2, 8)">-</button><div class="step-val" id="sprintsCount">4 шт</div><button class="step-btn" onclick="stepChange(this, 1, 2, 8)">+</button></div></div>
+                    </div>
+                    <div class="settings-block"><div class="sb-header">Рабочее пространство 🖥</div>
+                        <div class="setting-row" style="align-items: flex-start;"><div><div class="s-label">Разрешённые домены <span class="s-tooltip" title="Укажите сайты, на которых вы работаете. Если вы уйдёте на другие сайты, Томаторо зафиксирует отвлечение.">?</span></div><div class="s-hint">Если вы уйдёте с них во время спринта, Томаторо зафиксирует отвлечение.</div></div><div style="width: 100%; max-width: 250px;"><input type="text" class="domain-input" placeholder="figma.com"><input type="text" class="domain-input" placeholder="github.com"><input type="text" class="domain-input" placeholder="tomatoro.com" disabled style="opacity: 0.5; cursor: not-allowed;"></div></div>
+                        <div class="setting-row" style="margin-top: 24px; align-items: center;"><div><div class="s-label">Считать отвлечением через <span class="s-tooltip" title="Если вы вернётесь на рабочую вкладку быстрее этого времени, Томаторо не будет вас ругать.">?</span></div><div class="s-hint">Если вернётесь быстрее — отвлечение не зафиксируется.</div></div><div class="range-wrap"><input type="range" min="1" max="10" value="4" class="range-slider" id="distractionTime" oninput="document.getElementById('distractionVal').innerText = this.value + ' мин'"><div class="range-val" id="distractionVal">4 мин</div></div></div>
+                    </div>
+                    <div class="settings-block" style="grid-column: 1 / -1;"><div class="sb-header">Приватность и данные 🔒</div><div class="p-row"><div><div class="s-label">Экспорт данных</div><div class="s-hint">Скачать всю историю сессий и задач в формате CSV.</div></div><button class="btn-brutal btn-secondary btn-sm">Экспортировать</button></div><div class="p-row"><div><div class="s-label" style="color: var(--tomato-dark);">Удалить аккаунт навсегда</div><div class="s-hint">Все ваши данные, очки и подписка будут стёрты без возможности восстановления (152-ФЗ).</div></div><button class="btn-brutal btn-danger btn-sm" style="width: auto;" onclick="alert('Аккаунт будет удален')">Удалить</button></div></div>
+                </div>
+            </div>
+
+            <!-- ВЬЮХА: ГЕЙМИФИКАЦИЯ (НОВАЯ ЗАГЛУШКА) -->
+            <div class="view" id="viewGamification">
+                <div class="section-title"><span>Геймификация и уровни</span></div>
+                <div class="card-brutal placeholder-card">
+                    <div class="ph-block ph-center">
+                        <div style="font-size: 48px; margin-bottom: 16px;">🏆</div>
+                        <h2 class="ph-title" style="font-size: 24px; margin-bottom: 8px;">Сорта помидоров</h2>
+                        <p class="ph-text">Прокачивай свой уровень фокуса!</p>
+                    </div>
+                    <div class="ph-block">
+                        <h3 class="ph-title">⚡ Как это работает?</h3>
+                        <p class="ph-text">В полном рабочем приложении здесь будет представлена таблица всех уровней (сортов). Вы узнаете, сколько очков фокуса (ОФ) нужно для перехода на следующий уровень и как их заработать.</p>
+                    </div>
+                    <div class="ph-block">
+                        <h3 class="ph-title">🎁 Бонусы и награды</h3>
+                        <p class="ph-text">Каждый новый сорт помидора даёт множитель к накоплению внутренних очков и помидорок. Здесь будут описаны принципы начисления бонусов и способы их применения для оплаты подписки.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ВЬЮХА: СПРАВКА (НОВАЯ ЗАГЛУШКА) -->
+            <div class="view" id="viewHelp">
+                <div class="section-title"><span>Справка и поддержка</span></div>
+                <div class="card-brutal placeholder-card">
+                    <div class="ph-block">
+                        <h3 class="ph-title">🍅 Метод Помодоро</h3>
+                        <p class="ph-text">В этом разделе будет подробное руководство по методу тайм-менеджмента Помодоро. Вы узнаете, как правильно ставить цели, чередовать работу и отдых, и почему 25 минут — это золотой стандарт фокуса.</p>
+                    </div>
+                    <div class="ph-block">
+                        <h3 class="ph-title">⚙️ Функции Tomatoro</h3>
+                        <p class="ph-text">Здесь мы соберем описание всех возможностей приложения: от настройки рабочих доменов до работы с ИИ-напарником и интерпретации аналитики.</p>
+                    </div>
+                    <div class="ph-block">
+                        <h3 class="ph-title">💬 Контакты поддержки</h3>
+                        <p class="ph-text">Если что-то пошло не так или есть идеи для улучшения, здесь будут указаны способы связи с командой разработки.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ПРАВАЯ ЗОНА -->
+        <div class="dash-right">
+            <div class="dash-right-top">
+                <div class="stat-box" id="topTomatoPoints" onclick="alert('Откроется кошелек помидорок')">🍅 1500</div>
+                <div class="stat-box" id="topFocusPoints" onclick="alert('Откроется история очков фокуса')">⚡ 4500</div>
+            </div>
+            
+            <div class="tomatoro-wrapper">
+                <div class="tomatoro-char char-state-cheerful" id="tomatoroChar">
+                    <div class="tomato-leaf"></div>
+                    <div class="tomato-body"><div class="face"><div class="eye left"></div><div class="eye right"></div><div class="mouth"></div></div></div>
+                </div>
+                <div class="charge-btn" title="Подбодрить Томаторо" onclick="alert('Томаторо заряжен энергией!')">⚡</div>
+            </div>
+
+            <div style="font-weight: 700; font-size: 14px;" id="charName">Томаторо (Бодрый)</div>
+            <div class="chat-bubble" id="chatBubble"><span id="chatText">Уважаю масштаб, продолжай!</span></div>
+            
+            <div class="history-section no-scrollbar">
+                <div class="history-header">История дня:</div>
+                <div class="history-item"><span class="status-icon" style="background: var(--leaf);"></span><span>Спринт 2 завершен (+50 ⚡ очков фокуса)</span></div>
+                <div class="history-item"><span class="status-icon" style="background: var(--mustard);"></span><span>Перерыв 5 мин (пропущен)</span></div>
+                <div class="history-item"><span class="status-icon" style="background: var(--leaf);"></span><span>Спринт 1 завершен (+50 ⚡ очков фокуса)</span></div>
+                <div class="history-item"><span class="status-icon" style="background: var(--tomato-light);"></span><span>Отвлечение 4 мин (возвращение)</span></div>
+                <div class="history-item"><span class="status-icon" style="background: var(--leaf);"></span><span>Задача "Проверить почту" завершена</span></div>
+                <div class="history-item"><span class="status-icon" style="background: var(--mustard);"></span><span>Перерыв 5 мин</span></div>
+                <div class="history-item"><span class="status-icon" style="background: var(--leaf);"></span><span>Спринт 0 завершен (+50 ⚡ очков фокуса)</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модалка Архива -->
+    <div class="modal-overlay" id="archiveModal">
+        <div class="modal-box">
+            <div class="archive-header">
+                <h3 style="font-size: 18px;">Архив задач</h3>
+                <button class="close-btn" onclick="closeArchive()">✕</button>
+            </div>
+            <input type="date" class="date-picker" value="2023-10-24" onchange="loadArchiveTasks()">
+            <div style="flex: 1; overflow-y: auto;" id="archiveList">
+                <div class="archive-task"><div class="status-btn status-s-done">✓</div><span style="flex:1; font-weight:500;">Сверстать компонент таймера</span><span class="tag leaf" style="font-size: 10px;">Успех</span></div>
+                <div class="archive-task"><div class="status-btn status-s-fail">✕</div><span style="flex:1; font-weight:500;">Сходить в магазин</span><span class="tag" style="font-size: 10px; background: var(--tomato);">Провал</span></div>
+                <div class="archive-task"><div class="status-btn status-s-partial">⚠</div><span style="flex:1; font-weight:500;">Проверить почту</span><span class="tag" style="font-size: 10px; background: var(--mustard); color: var(--basil);">Частично</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="demo-controls">
+        <div style="font-family: 'Unbounded'; font-size: 12px; margin-bottom: 5px;">НАСТРОЕНИЕ ТОМАТОРО:</div>
+        <button onclick="setState('cheerful')">Бодрый (Фокус)</button>
+        <button onclick="setState('anxious')">Тревожный (Отвлекся)</button>
+        <button onclick="setState('sad')">Грустный (Долго нет)</button>
+        <button onclick="setState('failed')">Обиделся (Провал сессии)</button>
+    </div>
+
+    <script>
+        // Фоновые помидоры
+        const seedContainer = document.getElementById('seedContainer');
+        setInterval(() => {
+            const seed = document.createElement('div'); seed.className = 'floating-seed'; seed.innerText = '🍅';
+            seed.style.left = Math.random() * 100 + 'vw'; seed.style.animationDuration = (Math.random() * 5 + 5) + 's';
+            seedContainer.appendChild(seed); setTimeout(() => seed.remove(), 10000);
+        }, 2000);
+
+        const char = document.getElementById('tomatoroChar');
+        const chatText = document.getElementById('chatText');
+        const charName = document.getElementById('charName');
+        const statusTag = document.getElementById('statusTag');
+        const timerCircle = document.getElementById('timerCircle');
+        
+        const phrases = {
+            cheerful: ["Уважаю масштаб, продолжай!", "Ты в потоке, я только успеваю смотреть!", "Классно идет! Не сбавляй темп!"],
+            anxious: ["Эй, ты куда? Мы же договорились!", "Ты отвлекся! Помидор тикает...", "Возвращайся, цель ждет!"],
+            sad: ["Я тут один скучаю...", "Время уходит. Давай вернемся к работе.", "Мне так грустно от твоего отсутствия..."],
+            failed: ["Спринт провален... Списываем 50 ⚡ очков.", "Не сдавайся, завтра будет лучше!", "Ой... всё пропало. Но день продолжается!"]
+        };
+
+        function typeWriter(text, i=0) {
+            if (i < text.length) {
+                chatText.innerHTML = text.substring(0, i+1) + '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+                setTimeout(() => typeWriter(text, i+1), 30);
+            } else { chatText.innerHTML = text; }
+        }
+
+        function setState(state) {
+            char.className = 'tomatoro-char char-state-' + state;
+            if (state === 'cheerful') { charName.innerText = "Томаторо (Бодрый)"; statusTag.innerText = "В фокусе"; statusTag.style.background = "var(--leaf)"; timerCircle.style.background = "var(--white)"; timerCircle.classList.add('running'); }
+            else if (state === 'anxious') { charName.innerText = "Томаторо (Встревоженный)"; statusTag.innerText = "Отвлечение"; statusTag.style.background = "var(--mustard)"; timerCircle.style.background = "var(--mustard)"; }
+            else if (state === 'sad') { charName.innerText = "Томаторо (Грустный)"; statusTag.innerText = "Отвлечение"; statusTag.style.background = "var(--tomato-light)"; timerCircle.style.background = "var(--tomato-light)"; }
+            else if (state === 'failed') { charName.innerText = "Томаторо (Разочарованный)"; statusTag.innerText = "Срыв"; statusTag.style.background = "var(--tomato-dark)"; timerCircle.style.background = "var(--tomato-light)"; timerCircle.classList.remove('running'); }
+            const phrase = phrases[state][Math.floor(Math.random() * phrases[state].length)];
+            typeWriter(phrase);
+        }
+
+        // View Switcher
+        function switchView(viewName, element) {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            if (element && element.classList.contains('nav-item')) element.classList.add('active');
+            document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+            document.getElementById(`view${viewName.charAt(0).toUpperCase() + viewName.slice(1)}`).classList.add('active');
+            
+            const layout = document.getElementById('appLayout');
+            layout.classList.remove('tasks-mode', 'tariffs-mode', 'analytics-mode', 'profile-mode', 'settings-mode', 'help-mode', 'gamification-mode');
+            if (viewName === 'tasks') layout.classList.add('tasks-mode');
+            if (viewName === 'tariffs') layout.classList.add('tariffs-mode');
+            if (viewName === 'analytics') layout.classList.add('analytics-mode');
+            if (viewName === 'profile') layout.classList.add('profile-mode');
+            if (viewName === 'settings') layout.classList.add('settings-mode');
+            if (viewName === 'help') layout.classList.add('help-mode');
+            if (viewName === 'gamification') layout.classList.add('gamification-mode');
+        }
+
+        // Period Switcher
+        function setPeriod(btn) {
+            document.querySelectorAll('.period-btn').forEach(el => el.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        // Profile: Social Toggle
+        function toggleSocial(btn) {
+            if (btn.innerText === 'Привязать') { btn.innerText = 'Привязан'; btn.classList.remove('btn-secondary'); btn.classList.add('btn-leaf'); } else { btn.innerText = 'Привязать'; btn.classList.remove('btn-leaf'); btn.classList.add('btn-secondary'); }
+        }
+
+        // Settings: Stepper Logic
+        function stepChange(btn, delta, min, max) {
+            const valEl = btn.parentElement.querySelector('.step-val');
+            let current = parseInt(valEl.innerText);
+            current += delta;
+            if (current >= min && current <= max) {
+                valEl.innerText = current + ' мин';
+                if(valEl.id === 'sprintsCount') valEl.innerText = current + ' шт';
+            }
+        }
+        function resetSettings() {
+            document.getElementById('sprintTime').innerText = '25 мин'; document.getElementById('shortBreak').innerText = '5 мин'; document.getElementById('longBreak').innerText = '15 мин'; document.getElementById('sprintsCount').innerText = '4 шт'; document.getElementById('distractionTime').value = 4; document.getElementById('distractionVal').innerText = '4 мин';
+        }
+
+        // Task Management
+        function editTask(el) { el.contentEditable = true; el.focus(); el.addEventListener('blur', () => { el.contentEditable = false; }, { once: true }); }
+        function cycleStatus(btn) {
+            const task = btn.closest('.task-item');
+            const statuses = ['status-s-todo', 'status-s-done', 'status-s-partial', 'status-s-fail'];
+            const icons = ['', '✓', '⚠', '✕'];
+            let current = statuses.findIndex(s => btn.classList.contains(s));
+            current = (current + 1) % statuses.length;
+            statuses.forEach(s => btn.classList.remove(s)); btn.classList.add(statuses[current]); btn.innerHTML = icons[current];
+            if (current === 1 || current === 2 || current === 3) task.classList.add('done'); else task.classList.remove('done');
+        }
+        function addTask() {
+            const input = document.getElementById('newTaskInput'); if (input.value.trim() === '') return; const list = document.getElementById('taskList'); const newItem = document.createElement('div'); newItem.className = 'task-item';
+            newItem.innerHTML = `<div class="task-main"><div class="status-btn status-s-todo" onclick="cycleStatus(this)" title="Сменить статус"></div><span class="task-text" ondblclick="editTask(this)">${input.value}</span></div><div class="task-meta"><select class="assign-btn"><option selected>Не назначено</option><option>П1 С4</option><option>П2 С1</option></select></div><button class="task-del-btn" title="Удалить задачу" onclick="deleteTask(this)">✕</button>`;
+            list.appendChild(newItem); input.value = '';
+        }
+        function deleteTask(btn) { const task = btn.closest('.task-item'); task.style.transform = 'translateX(100px)'; task.style.opacity = '0'; setTimeout(() => task.remove(), 200); }
+
+        // --- ЛОГИКА ЭКОНОМИКИ ---
+        let coinsSpent = false; let deductedAmount = 0;
+        function updateFocusPoints(val) { document.getElementById('sidebarFocusPoints').innerText = val; document.getElementById('topFocusPoints').innerText = `⚡ ${val}`; document.getElementById('focusBalance').innerText = val; }
+        function updateTomatoPoints(val) { document.getElementById('topTomatoPoints').innerText = `🍅 ${val}`; document.getElementById('tomatoBalance').innerText = val; }
+        function animateNumber(el, start, target, step, onUpdate) { let interval = setInterval(() => { start += step; let val = start; if ((step > 0 && start >= target) || (step < 0 && start <= target)) { val = target; el.innerText = target; clearInterval(interval); } else { el.innerText = val; } if(onUpdate) onUpdate(val); }, 10); }
+        function buyTomatoes() { let focus = parseInt(document.getElementById('focusBalance').innerText); if (focus >= 300) { focus -= 300; updateFocusPoints(focus); let current = parseInt(document.getElementById('tomatoBalance').innerText()); let target = current + 3000; animateNumber(document.getElementById('tomatoBalance'), current, target, 50, (val) => { updateTomatoPoints(val); }); } else { alert("Недостаточно очков фокуса! Нужно 300 ⚡."); } }
+        function spendCoins() {
+            const btn = document.getElementById('spendCoinsBtn'); const payBtn = document.getElementById('payBtn'); const balVal = document.getElementById('tomatoBalance'); const priceTag = document.getElementById('priceTagRub'); const discText = document.getElementById('discountText');
+            if (!coinsSpent) {
+                const currentBal = parseInt(balVal.innerText); deductedAmount = Math.min(currentBal, 3000);
+                if (deductedAmount <= 0) { alert("У вас нет помидорок!"); return; }
+                const discount = deductedAmount / 10; const newPrice = 300 - discount; let target = currentBal - deductedAmount;
+                animateNumber(balVal, currentBal, target, -50, (val) => { updateTomatoPoints(val); });
+                btn.innerText = "Скидка применена!"; btn.style.background = "var(--leaf)"; btn.style.color = "white"; priceTag.innerHTML = `${newPrice} ₽ <span>/ в месяц</span>`;
+                if (newPrice === 0) { payBtn.innerText = "Продлить"; discText.innerText = "Скидка 100% оплачена помидорками"; } else { payBtn.innerText = `Оплатить ${newPrice} ₽ (YooKassa)`; discText.innerText = `Скидка ${discount} ₽ за помидорки`; }
+                coinsSpent = true;
+            } else {
+                let current = parseInt(balVal.innerText); let target = current + deductedAmount;
+                animateNumber(balVal, current, target, 50, (val) => { updateTomatoPoints(val); });
+                btn.innerText = "Потратить помидорки"; btn.style.background = "var(--mustard)"; btn.style.color = "var(--basil)";
+                priceTag.innerHTML = "300 ₽ <span>/ в месяц</span>"; payBtn.innerText = "Оплатить 300 ₽ (YooKassa)"; discText.innerText = "Без скидки";
+                deductedAmount = 0; coinsSpent = false;
+            }
+        }
+
+        // Archive
+        function openArchive() { document.getElementById('archiveModal').style.display = 'flex'; }
+        function closeArchive() { document.getElementById('archiveModal').style.display = 'none'; }
+        function loadArchiveTasks() {
+            const list = document.getElementById('archiveList'); list.innerHTML = '<div style="text-align:center; padding: 20px; opacity: 0.5;">Загрузка задач за выбранную дату...</div>';
+            setTimeout(() => { list.innerHTML = `<div class="archive-task"><div class="status-btn status-s-done">✓</div><span style="flex:1; font-weight:500;">Вчерашняя задача 1</span><span class="tag leaf" style="font-size: 10px;">Успех</span></div><div class="archive-task"><div class="status-btn status-s-fail">✕</div><span style="flex:1; font-weight:500;">Вчерашняя задача 2</span><span class="tag" style="font-size: 10px; background: var(--tomato);">Провал</span></div>`; }, 500);
+        }
+
+        // Timeline Drag
+        const timelineTrack = document.getElementById('timelineTrack');
+        let isDown = false, startX, scrollLeft;
+        timelineTrack.addEventListener('mousedown', (e) => { isDown = true; timelineTrack.style.cursor = 'grabbing'; startX = e.pageX - timelineTrack.offsetLeft; scrollLeft = timelineTrack.scrollLeft; });
+        timelineTrack.addEventListener('mouseleave', () => { isDown = false; timelineTrack.style.cursor = 'grab'; });
+        timelineTrack.addEventListener('mouseup', () => { isDown = false; timelineTrack.style.cursor = 'grab'; });
+        timelineTrack.addEventListener('mousemove', (e) => { if(!isDown) return; e.preventDefault(); const x = e.pageX - timelineTrack.offsetLeft; const walk = (x - startX) * 2; timelineTrack.scrollLeft = scrollLeft - walk; });
+
+        function selectSprint(element) { document.querySelectorAll('.segment').forEach(el => { if (el.classList.contains('seg-current')) { el.classList.remove('seg-current'); el.classList.add('seg-upcoming'); } }); element.classList.remove('seg-upcoming'); element.classList.add('seg-current'); }
+        function addPomodoroToTimeline() { const track = document.getElementById('timelineTrack'); const newGroup = document.createElement('div'); newGroup.className = 'pomodoro-group'; newGroup.innerHTML = `<div class="segment seg-upcoming">🍅</div><div class="add-sprint-btn" onclick="addSprintToPomodoro(this)">+</div>`; const divider = document.createElement('div'); divider.className = 'seg-divider'; track.insertBefore(divider, track.lastElementChild); track.insertBefore(newGroup, track.lastElementChild); track.scrollLeft = track.scrollWidth; }
+        function addSprintToPomodoro(btn) { const group = btn.parentElement; const newSprint = document.createElement('div'); newSprint.className = 'segment seg-upcoming'; newSprint.innerHTML = '🍅'; group.insertBefore(newSprint, btn); }
+
+        // Таймер
+        let seconds = 18 * 60 + 40; const timerText = document.getElementById('timerText');
+        setInterval(() => { if (seconds > 0 && timerCircle.classList.contains('running')) { seconds--; const m = Math.floor(seconds / 60); const s = seconds % 60; timerText.innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`; } }, 1000);
+    </script>
+</body>
+</html>

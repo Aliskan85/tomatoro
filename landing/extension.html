@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+<link rel="icon" type="image/png" sizes="64x64" href="img/favicon.png">
+<link rel="apple-touch-icon" href="img/favicon.png">
+    <title>Томаторо - макеты расширения браузера</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;700&family=JetBrains+Mono:wght@500;700&family=Unbounded:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cream: #FFF9F0; --tomato: #E94F37; --tomato-dark: #C43D2B;
+            --tomato-light: #F9C4B8; --leaf: #4C9F70; --leaf-light: #CDEBD8;
+            --basil: #1E1B18; --mustard: #F5B841; --lavender-soft: #D9D4F1; --white: #FFFFFF;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Golos Text', sans-serif; background-color: #f0f0f0; color: var(--basil); padding: 40px; }
+        h1, h2, h3 { font-family: 'Unbounded', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        .page-title { text-align: center; margin-bottom: 40px; font-size: 32px; }
+        .screens-grid { display: flex; flex-wrap: wrap; gap: 40px; justify-content: center; }
+        
+        .screen-wrapper { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+        .screen-label { font-weight: 700; font-size: 14px; background: var(--basil); color: var(--white); padding: 4px 12px; border-radius: 8px; text-align: center; }
+        
+        /* Базовый попап расширения (360px) */
+        .ext-popup {
+            width: 360px; height: 500px;
+            background: var(--white);
+            border: 3px solid var(--basil); border-radius: 20px;
+            box-shadow: 8px 8px 0 var(--basil);
+            display: flex; flex-direction: column; overflow: hidden; position: relative;
+        }
+        .ext-header { padding: 12px 16px; background: var(--cream); border-bottom: 2px solid var(--basil); display: flex; align-items: center; justify-content: space-between; }
+        .ext-user { display: flex; align-items: center; gap: 8px; }
+        .ext-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--tomato); border: 2px solid var(--basil); display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        .ext-name { font-weight: 700; font-size: 14px; }
+        .ext-badge { font-size: 10px; background: var(--lavender-soft); border: 1px solid var(--basil); padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+        .ext-gear { cursor: pointer; font-size: 18px; opacity: 0.6; }
+        .ext-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; gap: 16px; text-align: center; }
+        
+        .mini-timer-wrap { position: relative; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center; }
+        .mini-timer-circle { width: 100%; height: 100%; border: 4px solid var(--basil); border-radius: 50%; background: var(--white); box-shadow: 4px 4px 0 var(--basil); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .mini-timer-circle.running { animation: pulse-timer 2s infinite ease-in-out; }
+        .mini-timer-circle.break { background: var(--leaf-light); border-color: var(--leaf); box-shadow: 4px 4px 0 var(--leaf); }
+        .mini-timer-circle.distacted { background: var(--mustard); border-color: var(--basil); box-shadow: 4px 4px 0 var(--basil); animation: shake 0.5s infinite; }
+        @keyframes pulse-timer { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+        @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
+        .mini-timer-text { font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 700; }
+        
+        .mini-char { font-size: 80px; line-height: 1; animation: breathe 3s infinite ease-in-out; }
+        @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        
+        .btn-brutal { background: var(--tomato); color: var(--white); border: 2px solid var(--basil); border-radius: 10px; padding: 10px 20px; font-family: 'Unbounded', sans-serif; font-weight: 600; cursor: pointer; box-shadow: 3px 3px 0 var(--basil); transition: all 0.1s; user-select: none; font-size: 12px; }
+        .btn-brutal:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--basil); }
+        .btn-secondary { background: var(--white); color: var(--basil); }
+        .btn-leaf { background: var(--leaf); color: var(--white); }
+        .btn-sm { padding: 6px 12px; font-size: 11px; }
+        
+        .ext-input { width: 100%; padding: 10px; border: 2px solid var(--basil); border-radius: 10px; font-family: 'Golos Text', sans-serif; font-size: 14px; text-align: center; box-shadow: 3px 3px 0 var(--basil); background: var(--cream); }
+        .ext-input:focus { outline: none; border-color: var(--tomato); }
+        .series-dots { display: flex; gap: 8px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--basil); background: var(--white); }
+        .dot.active { background: var(--leaf); }
+        .ext-footer { padding: 10px 16px; background: var(--cream); border-top: 2px dashed var(--basil); display: flex; justify-content: space-between; align-items: center; font-size: 11px; }
+        .ext-link { color: var(--tomato); text-decoration: none; font-weight: 700; cursor: pointer; }
+        .ext-logout { color: var(--tomato-dark); font-weight: 700; cursor: pointer; opacity: 0.7; }
+        .ext-chat { background: var(--cream); border: 2px solid var(--basil); border-radius: 12px 12px 12px 0; padding: 10px 12px; font-size: 12px; font-weight: 500; text-align: left; width: 90%; box-shadow: 2px 2px 0 var(--basil); line-height: 1.3; }
+        
+        /* Блок Web Push */
+        .push-section { margin-top: 60px; display: flex; flex-direction: column; align-items: center; gap: 24px; }
+        .push-grid { display: flex; flex-wrap: wrap; gap: 32px; justify-content: center; }
+        .push-card-wrapper { display: flex; flex-direction: column; align-items: center; gap: 10px; max-width: 340px; }
+        
+        .push-notif {
+            width: 100%;
+            background: var(--white);
+            border: 2px solid var(--basil);
+            border-radius: 12px;
+            box-shadow: 6px 6px 0 var(--basil);
+            padding: 12px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+        .push-icon { width: 40px; height: 40px; background: var(--white); border: 2px solid var(--basil); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+        .push-icon.tomato { background: var(--tomato); }
+        .push-icon.leaf { background: var(--leaf); }
+        .push-icon.mustard { background: var(--mustard); }
+        .push-icon.dark { background: var(--tomato-dark); }
+        .push-content { flex: 1; }
+        .push-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; display: flex; justify-content: space-between; }
+        .push-text { font-size: 12px; opacity: 0.8; line-height: 1.3; }
+        .push-btn { margin-top: 8px; background: var(--basil); color: var(--white); border: none; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 11px; cursor: pointer; }
+        
+        .tariff-tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 700; border: 1px solid var(--basil); }
+        .tag-free { background: #e0e0e0; }
+        .tag-std { background: var(--lavender-soft); }
+    </style>
+</head>
+<body>
+
+    <h1 class="page-title">Дизайн браузерного расширения и уведомлений</h1>
+    
+    <div class="screens-grid">
+
+        <!-- Состояние 1: Не авторизован -->
+        <div class="screen-wrapper">
+            <div class="screen-label">Состояние 1: Не авторизован</div>
+            <div class="ext-popup">
+                <div class="ext-header">
+                    <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 20px;">🍅</span> <span style="font-weight: 700; font-size: 14px;">Tomatoro</span></div>
+                    <span class="ext-gear">⚙️</span>
+                </div>
+                <div class="ext-body">
+                    <div class="mini-char">🍅</div>
+                    <h3 style="font-size: 18px;">Войдите в аккаунт</h3>
+                    <p style="font-size: 14px; opacity: 0.7; max-width: 240px;">Чтобы я начал следить за фокусом и возвращать вас к задачам, авторизуйтесь в веб-кабинете.</p>
+                    <button class="btn-brutal" style="margin-top: 8px;">Войти / Зарегистрироваться</button>
+                </div>
+                <div class="ext-footer">
+                    <span style="opacity: 0.5;">© Tomatoro</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Состояние 2: Нет сессии -->
+        <div class="screen-wrapper">
+            <div class="screen-label">Состояние 2: Спринт не запущен</div>
+            <div class="ext-popup">
+                <div class="ext-header">
+                    <div class="ext-user">
+                        <div class="ext-avatar">🍅</div>
+                        <span class="ext-name">Иван</span>
+                        <span class="ext-badge">Стандарт</span>
+                    </div>
+                    <span class="ext-gear">⚙️</span>
+                </div>
+                <div class="ext-body">
+                    <h3 style="font-size: 16px; margin-bottom: 8px;">Чему посвятим спринт?</h3>
+                    <input type="text" class="ext-input" placeholder="Цель спринта (напр., читать код)">
+                    <button class="btn-brutal" style="width: 100%;">▶ Начать спринт</button>
+                </div>
+                <div class="ext-footer">
+                    <span class="ext-link">Открыть кабинет</span>
+                    <span class="ext-logout">Выйти</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Состояние 3: Спринт идёт -->
+        <div class="screen-wrapper">
+            <div class="screen-label">Состояние 3: Спринт идёт (В фокусе)</div>
+            <div class="ext-popup">
+                <div class="ext-header">
+                    <div class="ext-user">
+                        <div class="ext-avatar">🍅</div>
+                        <span class="ext-name">Иван</span>
+                        <span class="ext-badge">Стандарт</span>
+                    </div>
+                    <span class="ext-gear">⚙️</span>
+                </div>
+                <div class="ext-body">
+                    <div class="series-dots" style="position: absolute; top: 60px;">
+                        <div class="dot active"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div>
+                    </div>
+                    <div class="mini-timer-wrap">
+                        <div class="mini-timer-circle running">
+                            <div class="mini-timer-text mono">18:40</div>
+                            <div style="font-size: 10px; opacity: 0.6;">Спринт 3 из 4</div>
+                        </div>
+                    </div>
+                    <div style="background: var(--cream); border: 2px solid var(--basil); padding: 8px 12px; border-radius: 8px; width: 100%; font-size: 13px; font-weight: 600;">Написать 3 абзаца</div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn-brutal btn-secondary btn-sm">⏸ Пауза</button>
+                        <button class="btn-brutal btn-sm" style="background: var(--tomato-dark);">⏹ Стоп</button>
+                    </div>
+                </div>
+                <div class="ext-footer">
+                    <span class="ext-link">Открыть кабинет</span>
+                    <span class="ext-logout">Выйти</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Состояние 4: Перерыв -->
+        <div class="screen-wrapper">
+            <div class="screen-label">Состояние 4: Идёт перерыв</div>
+            <div class="ext-popup">
+                <div class="ext-header">
+                    <div class="ext-user">
+                        <div class="ext-avatar">😴</div>
+                        <span class="ext-name">Иван</span>
+                        <span class="ext-badge">Стандарт</span>
+                    </div>
+                    <span class="ext-gear">⚙️</span>
+                </div>
+                <div class="ext-body">
+                    <div class="mini-timer-wrap">
+                        <div class="mini-timer-circle break">
+                            <div class="mini-timer-text mono">04:12</div>
+                            <div style="font-size: 10px; color: var(--leaf); font-weight: 700;">Перерыв</div>
+                        </div>
+                    </div>
+                    <h3 style="font-size: 16px;">Отдыхайте!</h3>
+                    <p style="font-size: 13px; opacity: 0.7; max-width: 220px;">Встаньте, разомнитесь. До следующего спринта 4 минуты.</p>
+                    <button class="btn-brutal btn-leaf btn-sm">⏭ Пропустить перерыв</button>
+                </div>
+                <div class="ext-footer">
+                    <span class="ext-link">Открыть кабинет</span>
+                    <span class="ext-logout">Выйти</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Состояние 5: Отвлечение -->
+        <div class="screen-wrapper">
+            <div class="screen-label">Состояние 5: Зафиксировано отвлечение</div>
+            <div class="ext-popup">
+                <div class="ext-header">
+                    <div class="ext-user">
+                        <div class="ext-avatar">😰</div>
+                        <span class="ext-name">Иван</span>
+                        <span class="ext-badge" style="background: var(--mustard);">Внимание</span>
+                    </div>
+                    <span class="ext-gear">⚙️</span>
+                </div>
+                <div class="ext-body">
+                    <div class="mini-timer-wrap">
+                        <div class="mini-timer-circle distracted">
+                            <div class="mini-timer-text mono">12:15</div>
+                            <div style="font-size: 10px; font-weight: 700;">Осталось</div>
+                        </div>
+                    </div>
+                    <div class="ext-chat">
+                        <strong>🍅 Томаторо:</strong> Эй, ты куда? Мы же договорились! Помидор тикает...
+                    </div>
+                    <button class="btn-brutal" style="width: 100%;">↩ Вернуться к работе</button>
+                </div>
+                <div class="ext-footer">
+                    <span class="ext-link">Открыть кабинет</span>
+                    <span class="ext-logout">Выйти</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Блок: Системные уведомления (Web Push) -->
+    <div class="push-section">
+        <h2 style="font-size: 24px; text-align: center;">Системные уведомления (Web Push)<br><span style="font-size: 16px; opacity: 0.7; font-weight: 400;">Сравнение тарифов для одной и той же задачи ("Написать 3 абзаца статьи")</span></h2>
+        
+        <div class="push-grid">
+            
+            <!-- Базовый тариф -->
+            <div class="push-card-wrapper">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="tariff-tag tag-free">Базовый (Без ИИ)</span>
+                </div>
+                <div class="screen-label">Механический шаблон</div>
+                <div class="push-notif">
+                    <div class="push-icon">⏱</div>
+                    <div class="push-content">
+                        <div class="push-title">
+                            <span>Tomatoro: Отвлечение</span>
+                            <span style="opacity: 0.5; font-weight: 400;">4 мин</span>
+                        </div>
+                        <div class="push-text">Системное уведомление: Зафиксировано отвлечение. Ваша цель: "Написать 3 абзаца статьи". Пожалуйста, вернитесь к работе.</div>
+                        <button class="push-btn">Вернуться</button>
+                    </div>
+                </div>
+                <p style="font-size: 12px; opacity: 0.6; text-align: center; margin-top: 4px;">Сухой текст, отсутствие эмпатии и контекста.</p>
+            </div>
+
+            <!-- Стандартный: Бодрый (1-3 мин) -->
+            <div class="push-card-wrapper">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="tariff-tag tag-std">Стандартный (ИИ)</span>
+                </div>
+                <div class="screen-label">1-3 мин: Бодрый (Мягкое напоминание)</div>
+                <div class="push-notif">
+                    <div class="push-icon leaf">😊</div>
+                    <div class="push-content">
+                        <div class="push-title">
+                            <span>Томаторо</span>
+                            <span style="opacity: 0.5; font-weight: 400;">2 мин</span>
+                        </div>
+                        <div class="push-text">Эй, ты отвлекся, но я верю, что это ненадолго! Абзацы тебя очень ждут, возвращайся!</div>
+                        <button class="push-btn">Вернуться к задаче</button>
+                    </div>
+                </div>
+                <p style="font-size: 12px; opacity: 0.6; text-align: center; margin-top: 4px;">Дружелюбный тон, отсутствие давления. Верой в пользователя.</p>
+            </div>
+
+            <!-- Стандартный: Встревоженный (4 мин) -->
+            <div class="push-card-wrapper">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="tariff-tag tag-std">Стандартный (ИИ)</span>
+                </div>
+                <div class="screen-label">4 мин: Встревоженный</div>
+                <div class="push-notif">
+                    <div class="push-icon tomato">😟</div>
+                    <div class="push-content">
+                        <div class="push-title">
+                            <span>Томаторо</span>
+                            <span style="opacity: 0.5; font-weight: 400;">4 мин</span>
+                        </div>
+                        <div class="push-text">Эй, ты куда? Мы же договорились! Абзацы не напишут сами себя. Возвращайся, цель ждет!</div>
+                        <button class="push-btn">Вернуться к задаче</button>
+                    </div>
+                </div>
+                <p style="font-size: 12px; opacity: 0.6; text-align: center; margin-top: 4px;">ИИ понимает суть задачи и использует легкий юмор.</p>
+            </div>
+
+            <!-- Стандартный: Грустный (8 мин) -->
+            <div class="push-card-wrapper">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="tariff-tag tag-std">Стандартный (ИИ)</span>
+                </div>
+                <div class="screen-label">8 мин: Грустный</div>
+                <div class="push-notif">
+                    <div class="push-icon mustard">😢</div>
+                    <div class="push-content">
+                        <div class="push-title">
+                            <span>Томаторо</span>
+                            <span style="opacity: 0.5; font-weight: 400;">8 мин</span>
+                        </div>
+                        <div class="push-text">Мне так грустно от твоего отсутствия... Статья совсем остыла. Давай вернемся к 3 абзацам?</div>
+                        <button class="push-btn">Вернуться к задаче</button>
+                    </div>
+                </div>
+                <p style="font-size: 12px; opacity: 0.6; text-align: center; margin-top: 4px;">Тон меняется на печальный, вызывая чувство вины и эмпатии.</p>
+            </div>
+
+            <!-- Стандартный: Обиженный (12 мин) -->
+            <div class="push-card-wrapper">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="tariff-tag tag-std">Стандартный (ИИ)</span>
+                </div>
+                <div class="screen-label">12 мин: Обиженный</div>
+                <div class="push-notif">
+                    <div class="push-icon dark">😡</div>
+                    <div class="push-content">
+                        <div class="push-title">
+                            <span>Томаторо</span>
+                            <span style="opacity: 0.5; font-weight: 400;">12 мин</span>
+                        </div>
+                        <div class="push-text">Понятно. Сижу один, смотрю на пустой таймер. Напишешь эти 3 абзаца когда-нибудь? Я обиделся.</div>
+                        <button class="push-btn">Вернуться к задаче</button>
+                    </div>
+                </div>
+                <p style="font-size: 12px; opacity: 0.6; text-align: center; margin-top: 4px;">Теплый, но строгий напарник. Социальное давление.</p>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>
